@@ -4,7 +4,7 @@ import 'package:universal_ssh/core/ssh/ssh_contracts.dart';
 void main() {
   group('FR-001 connection request', () {
     test('preserves host, port and username without UI coupling', () {
-      const request = SshConnectionRequest(
+      final request = SshConnectionRequest(
         host: 'ssh.example.test',
         port: 2222,
         username: 'researcher',
@@ -35,7 +35,7 @@ void main() {
 
   group('SEC-001 host identity', () {
     test('requires an explicit host verification decision', () {
-      const identity = SshHostIdentity(
+      final identity = SshHostIdentity(
         algorithm: 'ssh-ed25519',
         fingerprint: 'SHA256:test-fixture-only',
       );
@@ -47,23 +47,26 @@ void main() {
           SshHostVerificationDecision.reject,
         ]),
       );
+      expect(identity.algorithm, 'ssh-ed25519');
       expect(identity.fingerprint, startsWith('SHA256:'));
     });
 
     test('represents a changed host key as a typed failure', () {
-      const failure = SshFailure.hostKeyMismatch(
+      final failure = SshFailure.hostKeyMismatch(
         expectedFingerprint: 'SHA256:expected',
         actualFingerprint: 'SHA256:actual',
       );
 
       expect(failure, isA<SshFailure>());
       expect(failure.code, SshFailureCode.hostKeyMismatch);
+      expect(failure.expectedFingerprint, 'SHA256:expected');
+      expect(failure.actualFingerprint, 'SHA256:actual');
     });
   });
 
   group('FR-004 authentication', () {
     test('models authentication input without storing a plaintext secret', () {
-      const request = SshAuthenticationRequest.publicKey(
+      final request = SshAuthenticationRequest.publicKey(
         username: 'researcher',
       );
 
@@ -74,17 +77,19 @@ void main() {
 
   group('FR-006 I/O', () {
     test('distinguishes stdout and stderr', () {
-      const stdout = SshOutput.stdout([111, 107]);
-      const stderr = SshOutput.stderr([101, 114, 114]);
+      final stdout = SshOutput.stdout([111, 107]);
+      final stderr = SshOutput.stderr([101, 114, 114]);
 
       expect(stdout.channel, SshOutputChannel.stdout);
+      expect(stdout.bytes, [111, 107]);
       expect(stderr.channel, SshOutputChannel.stderr);
+      expect(stderr.bytes, [101, 114, 114]);
     });
   });
 
   group('NFR-002 platform capability', () {
     test('does not pretend every transport has identical capabilities', () {
-      const capabilities = SshTransportCapabilities(
+      final capabilities = SshTransportCapabilities(
         rawTcp: false,
         requiresBridge: true,
       );
