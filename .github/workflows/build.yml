@@ -59,6 +59,15 @@ jobs:
             $bmp.Save((Join-Path "uwp/UniversalSshUwp/Assets" $item.Key),[System.Drawing.Imaging.ImageFormat]::Png)
             $g.Dispose(); $bmp.Dispose()
           }
+      - name: Validate UWP Release x64 project contract
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content uwp/UniversalSshUwp/UniversalSshUwp.csproj
+          $release = $project.Project.PropertyGroup | Where-Object { $_.Condition -match "Release\\|x64" }
+          if (-not $release -or -not $release.OutputPath) {
+            throw "UWP Release|x64 must define OutputPath before MSBuild."
+          }
+
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
         shell: pwsh
