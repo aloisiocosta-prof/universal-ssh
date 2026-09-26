@@ -8,7 +8,11 @@ on:
 permissions:
   contents: read
 jobs:
+  quality-gate:
+    uses: ./.github/workflows/quality.yml
+
   build-web:
+    needs: quality-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,12 +21,33 @@ jobs:
       - name: Generate official Flutter platform scaffolds
         run: flutter create --platforms=android,web --project-name universal_ssh .
       - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
       - run: flutter build web --release
       - uses: actions/upload-artifact@v4
         with: {name: flutter-web, path: build/web/, if-no-files-found: error}
+      - name: Upload build/web for GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/web/
+
+  deploy-pages:
+    name: Deploy build/web to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality-gate, build-web]
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy exact build/web artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   build-android:
+    needs: quality-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: {name: android-apk, path: build/app/outputs/flutter-apk/*.apk, if-no-files-found: error}
   build-uwp-x64:
-    needs: build-web
+    needs: [quality-gate, build-web]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -56,10 +81,23 @@ jobs:
             $bmp.Save((Join-Path "uwp/UniversalSshUwp/Assets" $item.Key),[System.Drawing.Imaging.ImageFormat]::Png)
             $g.Dispose(); $bmp.Dispose()
           }
+      - name: Validate modern UWP project contract
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content uwp/UniversalSshUwp/UniversalSshUwp.csproj
+          $properties = $project.Project.PropertyGroup
+          if ($project.Project.Sdk -ne "Microsoft.NET.Sdk") { throw "UWP project must use Microsoft.NET.Sdk." }
+          if ($properties.UseUwp -ne "true") { throw "UWP project must enable UseUwp." }
+          if ($properties.PlatformTarget -ne "x64") { throw "UWP project must target x64." }
+          if ([string]$properties.TargetFramework -notlike "net10.0-windows*") { throw "UWP project must target modern Windows .NET. Actual: $($properties.TargetFramework)" }
+          if ($properties.RuntimeIdentifier -ne "win-x64") { throw "UWP project must use win-x64 RuntimeIdentifier." }
+          if ($properties.PublishAot -ne "true") { throw "UWP project must keep Native AOT enabled." }
+          if ($properties.SelfContained -ne "true") { throw "Native AOT UWP package must be self-contained." }
+
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
         shell: pwsh
-        run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
+        run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
       - uses: actions/upload-artifact@v4
         with:
           name: uwp-x64
