@@ -2,8 +2,28 @@ name: Build
 on:
   push:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "web/**"
+      - "android/**"
+      - "uwp/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/build.yml"
+      - ".github/workflows/quality.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "web/**"
+      - "android/**"
+      - "uwp/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/build.yml"
+      - ".github/workflows/quality.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -61,6 +81,7 @@ jobs:
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with: {name: android-apk, path: build/app/outputs/flutter-apk/*.apk, if-no-files-found: error}
+
   build-uwp-x64:
     needs: [quality-gate, build-web]
     runs-on: windows-latest
