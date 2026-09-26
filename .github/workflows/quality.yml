@@ -40,9 +40,9 @@ jobs:
       - name: Enforce core coverage
         shell: bash
         run: |
-          covered=$(awk -F: '/^DA:/{total++; if ($3 > 0) hit++} END {if (total == 0) print 0; else printf "%.2f", hit*100/total}' coverage/lcov.info)
+          covered=$(awk -F: '/^DA:/{total++; if ($2 > 0) hit++} END {if (total == 0) print 0; else printf "%.2f", hit*100/total}' coverage/lcov.info)
           echo "Core coverage: ${covered}%"
-          awk -F: -v min=70 '/^DA:/{total++; if ($3 > 0) hit++} END {pct=(total==0?0:hit*100/total); exit !(pct >= min)}' coverage/lcov.info
+          awk -F: -v min=70 '/^DA:/{total++; if ($2 > 0) hit++} END {pct=(total==0?0:hit*100/total); exit !(pct >= min)}' coverage/lcov.info
 
       - name: Dependency audit
         run: dart pub outdated --no-dependency-overrides
