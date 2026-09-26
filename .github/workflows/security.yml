@@ -22,11 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-      - name: Resolve dependencies
-        run: dart pub get
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Resolve Flutter dependencies
+        run: flutter pub get
       - name: Audit outdated dependencies
-        run: dart pub outdated
+        run: flutter pub outdated
       - name: Dependency graph prerequisite
         run: |
           echo "::notice::GitHub Dependency Review becomes a required gate after Dependency Graph is enabled in repository security settings."
