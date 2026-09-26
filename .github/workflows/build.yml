@@ -59,19 +59,20 @@ jobs:
             $bmp.Save((Join-Path "uwp/UniversalSshUwp/Assets" $item.Key),[System.Drawing.Imaging.ImageFormat]::Png)
             $g.Dispose(); $bmp.Dispose()
           }
-      - name: Validate UWP Release x64 project contract
+      - name: Validate modern UWP project contract
         shell: pwsh
         run: |
           [xml]$project = Get-Content uwp/UniversalSshUwp/UniversalSshUwp.csproj
-          $release = $project.Project.PropertyGroup | Where-Object { $_.Condition -match "Release\\|x64" }
-          if (-not $release -or -not $release.OutputPath) {
-            throw "UWP Release|x64 must define OutputPath before MSBuild."
-          }
+          $properties = $project.Project.PropertyGroup
+          if ($project.Project.Sdk -ne "Microsoft.NET.Sdk") { throw "UWP project must use Microsoft.NET.Sdk." }
+          if ($properties.UseUwp -ne "true") { throw "UWP project must enable UseUwp." }
+          if ($properties.PlatformTarget -ne "x64") { throw "UWP project must target x64." }
+          if ($properties.TargetFramework -notmatch "^net10\\.0-windows") { throw "UWP project must target modern Windows .NET." }
 
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
         shell: pwsh
-        run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
+        run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
       - uses: actions/upload-artifact@v4
         with:
           name: uwp-x64
