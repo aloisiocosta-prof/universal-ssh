@@ -29,6 +29,8 @@ class HomePage extends StatelessWidget {
               Text('Universal SSH', style: TextStyle(fontSize: 28)),
               SizedBox(height: 8),
               Text('Web • Android • Windows x64 • Xbox One'),
+              SizedBox(height: 24),
+              FilledButton(onPressed: null, child: Text('Nova conexão')),
             ],
           ),
         ),
