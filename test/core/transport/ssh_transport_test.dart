@@ -21,6 +21,14 @@ void main() {
 
       expect(transport.lastRequest, same(request));
       expect(connection, isA<SshTransportConnection>());
+      expect(await connection.incoming.toList(), isEmpty);
+
+      await connection.send([1, 2, 3]);
+      await connection.close();
+
+      expect(connection, isA<_FakeConnection>());
+      expect((connection as _FakeConnection).sentBytes, [1, 2, 3]);
+      expect(connection.isClosed, isTrue);
     });
 
     test('exposes platform limitations before connection', () {
@@ -48,19 +56,22 @@ final class _RecordingTransport implements SshTransport {
   @override
   Future<SshTransportConnection> connect(SshConnectionRequest request) async {
     lastRequest = request;
-    return const _FakeConnection();
+    return _FakeConnection();
   }
 }
 
 final class _FakeConnection implements SshTransportConnection {
-  const _FakeConnection();
+  _FakeConnection();
+
+  final List<int> sentBytes = [];
+  bool isClosed = false;
 
   @override
   Stream<List<int>> get incoming => const Stream.empty();
 
   @override
-  Future<void> send(List<int> bytes) async {}
+  Future<void> send(List<int> bytes) async => sentBytes.addAll(bytes);
 
   @override
-  Future<void> close() async {}
+  Future<void> close() async => isClosed = true;
 }
