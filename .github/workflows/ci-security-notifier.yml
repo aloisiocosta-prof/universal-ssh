@@ -1,0 +1,144 @@
+name: CI Security Completion Notifier
+
+on:
+  workflow_run:
+    workflows: [Build, Security]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-security-notifier-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  aggregate:
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-latest
+    env:
+      NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+    steps:
+      - name: Resolve CI and Security state for this commit
+        id: aggregate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.payload.workflow_run.head_sha;
+            const current = context.payload.workflow_run;
+            const prs = current.pull_requests ?? [];
+
+            if (prs.length === 0) {
+              core.notice('No pull request is associated with this workflow run.');
+              core.setOutput('ready', 'false');
+              return;
+            }
+
+            const pr = prs[0];
+            const expected = ['Build', 'Security'];
+            const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head_sha: sha,
+              event: 'pull_request',
+              per_page: 100
+            });
+
+            const latest = new Map();
+            for (const run of data.workflow_runs) {
+              if (!expected.includes(run.name)) continue;
+              const previous = latest.get(run.name);
+              if (!previous || new Date(run.created_at) > new Date(previous.created_at)) {
+                latest.set(run.name, run);
+              }
+            }
+
+            const summary = expected.map(name => {
+              const run = latest.get(name);
+              return {
+                workflow: name,
+                status: run?.status ?? 'missing',
+                conclusion: run?.conclusion ?? null,
+                run_id: run?.id ?? null,
+                html_url: run?.html_url ?? null
+              };
+            });
+
+            const ready = summary.every(
+              item => item.status === 'completed' && item.conclusion !== null
+            );
+
+            core.setOutput('ready', String(ready));
+            core.setOutput('pr_number', String(pr.number));
+            core.setOutput('head_sha', sha);
+            core.setOutput('summary', JSON.stringify(summary));
+
+            if (!ready) {
+              core.notice('CI/Security pair is not terminal yet; no notification will be sent.');
+            }
+
+      - name: Collect failed and skipped jobs
+        if: ${{ steps.aggregate.outputs.ready == 'true' }}
+        id: jobs
+        uses: actions/github-script@v7
+        env:
+          WORKFLOW_SUMMARY: ${{ steps.aggregate.outputs.summary }}
+        with:
+          script: |
+            const workflows = JSON.parse(process.env.WORKFLOW_SUMMARY);
+            const details = [];
+
+            for (const workflow of workflows) {
+              const { data } = await github.rest.actions.listJobsForWorkflowRun({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: workflow.run_id,
+                per_page: 100
+              });
+
+              details.push({
+                ...workflow,
+                jobs: data.jobs
+                  .filter(job => ['failure', 'cancelled', 'timed_out', 'action_required', 'skipped'].includes(job.conclusion))
+                  .map(job => ({
+                    name: job.name,
+                    conclusion: job.conclusion,
+                    html_url: job.html_url
+                  }))
+              });
+            }
+
+            core.setOutput('details', JSON.stringify(details));
+
+      - name: Emit completion event
+        if: ${{ steps.aggregate.outputs.ready == 'true' && env.NOTIFICATION_WEBHOOK_URL != '' }}
+        env:
+          PR_NUMBER: ${{ steps.aggregate.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.aggregate.outputs.head_sha }}
+          DETAILS: ${{ steps.jobs.outputs.details }}
+        run: |
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson pr "$PR_NUMBER" \
+            --arg sha "$HEAD_SHA" \
+            --argjson workflows "$DETAILS" \
+            '{
+              event: "ci_security.completed",
+              repository: $repository,
+              pull_request: $pr,
+              head_sha: $sha,
+              workflows: $workflows
+            }' > payload.json
+
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors \
+            -H 'Content-Type: application/json' \
+            --data-binary @payload.json \
+            "$NOTIFICATION_WEBHOOK_URL"
+
+      - name: Explain unconfigured receiver
+        if: ${{ steps.aggregate.outputs.ready == 'true' && env.NOTIFICATION_WEBHOOK_URL == '' }}
+        run: |
+          echo "::notice::Both workflows are terminal. Set repository secret NOTIFICATION_WEBHOOK_URL to enable push delivery."
