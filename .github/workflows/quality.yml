@@ -37,6 +37,8 @@ jobs:
         run: flutter create --platforms=android,web --project-name universal_ssh .
       - name: Resolve dependencies
         run: flutter pub get
+      - name: Show authoritative formatter output for platform transport test
+        run: dart format --output=show test/core/transport/platform_transport_test.dart
       - name: Formatting gate
         run: dart format --output=none --set-exit-if-changed lib test
       - name: Static analysis
