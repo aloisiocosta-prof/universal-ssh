@@ -8,7 +8,11 @@ on:
 permissions:
   contents: read
 jobs:
+  quality-gate:
+    uses: ./.github/workflows/quality.yml
+
   build-web:
+    needs: quality-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,12 +21,11 @@ jobs:
       - name: Generate official Flutter platform scaffolds
         run: flutter create --platforms=android,web --project-name universal_ssh .
       - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
       - run: flutter build web --release
       - uses: actions/upload-artifact@v4
         with: {name: flutter-web, path: build/web/, if-no-files-found: error}
   build-android:
+    needs: quality-gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +40,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: {name: android-apk, path: build/app/outputs/flutter-apk/*.apk, if-no-files-found: error}
   build-uwp-x64:
-    needs: build-web
+    needs: [quality-gate, build-web]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
