@@ -4,8 +4,20 @@ on:
   workflow_call:
   pull_request:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/quality.yml"
   push:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/quality.yml"
   workflow_dispatch:
 
 permissions:
@@ -21,36 +33,27 @@ jobs:
         with:
           channel: stable
           cache: true
-
       - name: Generate Flutter scaffolds
         run: flutter create --platforms=android,web --project-name universal_ssh .
-
       - name: Resolve dependencies
         run: flutter pub get
-
       - name: Formatting gate
         run: dart format --output=none --set-exit-if-changed lib test
-
       - name: Static analysis
         run: flutter analyze --fatal-infos --fatal-warnings
-
       - name: Unit and widget tests with coverage
         run: flutter test --coverage
-
       - name: Enforce core coverage
         shell: bash
         run: |
           covered=$(awk -F'[:,]' '/^DA:/{total++; if ($3 > 0) hit++} END {if (total == 0) print 0; else printf "%.2f", hit*100/total}' coverage/lcov.info)
           echo "Core coverage: ${covered}%"
           awk -F'[:,]' -v min=70 '/^DA:/{total++; if ($3 > 0) hit++} END {pct=(total==0?0:hit*100/total); exit !(pct >= min)}' coverage/lcov.info
-
       - name: Dependency audit
         run: dart pub outdated --no-dependency-overrides
-
       - name: Security pattern gate
         shell: bash
         run: |
-          ! grep -RInE --exclude-dir=.git --exclude='*.lock'             '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,})' .
-
+          ! grep -RInE --exclude-dir=.git --exclude='*.lock' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,})' .
       - name: Performance smoke test
         run: flutter test test/performance --reporter expanded
