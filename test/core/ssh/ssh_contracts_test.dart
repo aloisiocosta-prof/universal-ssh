@@ -47,6 +47,7 @@ void main() {
           SshHostVerificationDecision.reject,
         ]),
       );
+      expect(identity.algorithm, 'ssh-ed25519');
       expect(identity.fingerprint, startsWith('SHA256:'));
     });
 
@@ -58,6 +59,8 @@ void main() {
 
       expect(failure, isA<SshFailure>());
       expect(failure.code, SshFailureCode.hostKeyMismatch);
+      expect(failure.expectedFingerprint, 'SHA256:expected');
+      expect(failure.actualFingerprint, 'SHA256:actual');
     });
   });
 
@@ -78,7 +81,9 @@ void main() {
       const stderr = SshOutput.stderr([101, 114, 114]);
 
       expect(stdout.channel, SshOutputChannel.stdout);
+      expect(stdout.bytes, [111, 107]);
       expect(stderr.channel, SshOutputChannel.stderr);
+      expect(stderr.bytes, [101, 114, 114]);
     });
   });
 
