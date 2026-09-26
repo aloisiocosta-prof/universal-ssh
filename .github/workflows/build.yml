@@ -68,7 +68,7 @@ jobs:
 
   build-web:
     needs: [changes, quality-gate]
-    if: always() && (needs.changes.outputs.shared == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.ci == 'true') && (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
+    if: always() && (needs.changes.outputs.shared == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.uwp == 'true' || needs.changes.outputs.ci == 'true') && (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
