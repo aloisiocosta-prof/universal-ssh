@@ -17,12 +17,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dart-dependency-audit:
+    name: dart-dependency-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+      - name: Resolve dependencies
+        run: dart pub get
+      - name: Audit outdated dependencies
+        run: dart pub outdated
+      - name: Dependency graph prerequisite
+        run: |
+          echo "::notice::GitHub Dependency Review becomes a required gate after Dependency Graph is enabled in repository security settings."
+
   dependency-review:
     name: dependency-review
     if: github.event_name == 'pull_request'
+    continue-on-error: true
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/dependency-review-action@v4
