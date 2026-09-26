@@ -1,28 +1,70 @@
-name: Build
+name: CI
+
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-web:
+  quality:
+    name: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with: {channel: stable, cache: true}
-      - name: Generate official Flutter platform scaffolds
+      - name: Preserve versioned application sources
+        run: |
+          mkdir -p "$RUNNER_TEMP/app-source"
+          cp -R lib test analysis_options.yaml pubspec.yaml "$RUNNER_TEMP/app-source/"
+      - name: Generate official Flutter scaffolds
         run: flutter create --platforms=android,web --project-name universal_ssh .
+      - name: Restore versioned application sources
+        run: |
+          rm -rf lib test
+          cp -R "$RUNNER_TEMP/app-source/lib" "$RUNNER_TEMP/app-source/test" .
+          cp "$RUNNER_TEMP/app-source/analysis_options.yaml" "$RUNNER_TEMP/app-source/pubspec.yaml" .
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+
+  build-web:
+    name: build-web
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: {channel: stable, cache: true}
+      - name: Preserve and generate Web scaffold
+        run: |
+          mkdir -p "$RUNNER_TEMP/app-source"
+          cp -R lib pubspec.yaml "$RUNNER_TEMP/app-source/"
+          flutter create --platforms=web --project-name universal_ssh .
+          rm -rf lib
+          cp -R "$RUNNER_TEMP/app-source/lib" .
+          cp "$RUNNER_TEMP/app-source/pubspec.yaml" .
+          flutter pub get
       - run: flutter build web --release
       - uses: actions/upload-artifact@v4
-        with: {name: flutter-web, path: build/web/, if-no-files-found: error}
+        with:
+          name: flutter-web-${{ github.sha }}
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 14
+
   build-android:
+    name: build-android
+    needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,19 +72,33 @@ jobs:
         with: {distribution: temurin, java-version: "17"}
       - uses: subosito/flutter-action@v2
         with: {channel: stable, cache: true}
-      - name: Generate official Android scaffold
-        run: flutter create --platforms=android --project-name universal_ssh .
-      - run: flutter pub get
+      - name: Preserve and generate Android scaffold
+        run: |
+          mkdir -p "$RUNNER_TEMP/app-source"
+          cp -R lib pubspec.yaml "$RUNNER_TEMP/app-source/"
+          flutter create --platforms=android --project-name universal_ssh .
+          rm -rf lib
+          cp -R "$RUNNER_TEMP/app-source/lib" .
+          cp "$RUNNER_TEMP/app-source/pubspec.yaml" .
+          flutter pub get
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
-        with: {name: android-apk, path: build/app/outputs/flutter-apk/*.apk, if-no-files-found: error}
+        with:
+          name: android-apk-${{ github.sha }}
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
   build-uwp-x64:
-    needs: build-web
+    name: build-uwp-x64
+    needs: [quality, build-web]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v5
-        with: {name: flutter-web, path: uwp/UniversalSshUwp/Web}
+        with:
+          name: flutter-web-${{ github.sha }}
+          path: uwp/UniversalSshUwp/Web
       - name: Generate placeholder UWP visual assets
         shell: pwsh
         run: |
@@ -62,8 +118,9 @@ jobs:
         run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:UapAppxPackageBuildMode=SideloadOnly /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
       - uses: actions/upload-artifact@v4
         with:
-          name: uwp-x64
+          name: uwp-x64-${{ github.sha }}
           path: |
             uwp/**/AppPackages/**/*.appx
             uwp/**/AppPackages/**/*.msix
           if-no-files-found: error
+          retention-days: 14
