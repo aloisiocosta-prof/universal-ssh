@@ -68,6 +68,9 @@ jobs:
           if ($properties.UseUwp -ne "true") { throw "UWP project must enable UseUwp." }
           if ($properties.PlatformTarget -ne "x64") { throw "UWP project must target x64." }
           if ([string]$properties.TargetFramework -notlike "net10.0-windows*") { throw "UWP project must target modern Windows .NET. Actual: $($properties.TargetFramework)" }
+          if ($properties.RuntimeIdentifier -ne "win-x64") { throw "UWP project must use win-x64 RuntimeIdentifier." }
+          if ($properties.PublishAot -ne "true") { throw "UWP project must keep Native AOT enabled." }
+          if ($properties.SelfContained -ne "true") { throw "Native AOT UWP package must be self-contained." }
 
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
