@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/github-workflow.js": {
+      "maxDuration": 10
+    }
+  }
+}
