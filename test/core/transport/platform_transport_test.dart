@@ -6,9 +6,9 @@ void main() {
     test(
       'Web requires a bridge because browser Dart has no raw TCP socket',
       () {
-      final capabilities = transportCapabilitiesFor(SshRuntimePlatform.web);
+        final capabilities = transportCapabilitiesFor(SshRuntimePlatform.web);
 
-      expect(capabilities.rawTcp, isFalse);
+        expect(capabilities.rawTcp, isFalse);
         expect(capabilities.requiresBridge, isTrue);
       },
     );
