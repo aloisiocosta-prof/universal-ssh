@@ -1,0 +1,53 @@
+name: Research Evidence
+
+on:
+  workflow_run:
+    workflows: [Quality Gate]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Capture reproducibility metadata
+        shell: bash
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          mkdir -p research-evidence
+          {
+            echo "repository=$GITHUB_REPOSITORY"
+            echo "commit_sha=$HEAD_SHA"
+            echo "workflow_run_id=$RUN_ID"
+            echo "workflow_url=$RUN_URL"
+            echo "conclusion=$CONCLUSION"
+            echo "runner_os=$RUNNER_OS"
+            echo "runner_arch=$RUNNER_ARCH"
+            echo "collected_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "pubspec_version=$(awk '/^version:/{print $2}' pubspec.yaml)"
+            echo "pubspec_lock_sha256=$(sha256sum pubspec.lock 2>/dev/null | awk '{print $1}')"
+          } > research-evidence/metadata.txt
+
+      - name: Capture repository state
+        run: |
+          git show -s --format=fuller HEAD > research-evidence/commit.txt
+          git status --porcelain=v1 > research-evidence/worktree-status.txt
+
+      - name: Upload immutable evidence bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-evidence-${{ github.event.workflow_run.id }}
+          path: research-evidence/
+          if-no-files-found: error
+          retention-days: 90
