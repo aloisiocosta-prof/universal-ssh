@@ -1,0 +1,7 @@
+<Page x:Class="UniversalSshUwp.MainPage"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <Grid Background="Black">
+  <WebView x:Name="FlutterView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ScriptNotify="OnScriptNotify"/>
+ </Grid>
+</Page>
