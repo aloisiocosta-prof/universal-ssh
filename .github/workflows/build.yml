@@ -67,7 +67,7 @@ jobs:
           if ($project.Project.Sdk -ne "Microsoft.NET.Sdk") { throw "UWP project must use Microsoft.NET.Sdk." }
           if ($properties.UseUwp -ne "true") { throw "UWP project must enable UseUwp." }
           if ($properties.PlatformTarget -ne "x64") { throw "UWP project must target x64." }
-          if ($properties.TargetFramework -notmatch "^net10\\.0-windows") { throw "UWP project must target modern Windows .NET." }
+          if ([string]$properties.TargetFramework -notlike "net10.0-windows*") { throw "UWP project must target modern Windows .NET. Actual: $($properties.TargetFramework)" }
 
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
