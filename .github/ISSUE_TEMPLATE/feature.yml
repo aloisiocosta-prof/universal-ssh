@@ -1,0 +1,24 @@
+name: Feature
+description: Nova capacidade rastreável
+title: "feat: "
+body:
+  - type: textarea
+    id: context
+    attributes: {label: Contexto}
+    validations: {required: true}
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      value: "- [ ]"
+    validations: {required: true}
+  - type: textarea
+    id: security
+    attributes:
+      label: Segurança e privacidade
+      description: Ameaças, permissões, credenciais, rede e dados afetados.
+  - type: textarea
+    id: traceability
+    attributes:
+      label: Rastreabilidade
+      description: Epic, sub-issues e dependências relacionadas.
