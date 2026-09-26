@@ -1,0 +1,23 @@
+name: Bug
+description: Defeito reproduzível
+title: "fix: "
+body:
+  - type: textarea
+    id: observed
+    attributes: {label: Comportamento observado}
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes: {label: Comportamento esperado}
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reprodução
+      description: Inclua plataforma, commit SHA, workflow/run/job e passos mínimos.
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidências
+      description: Logs sanitizados, screenshots e links para checks.
