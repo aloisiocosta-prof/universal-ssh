@@ -63,7 +63,7 @@ void main() {
 
   group('FR-004 authentication', () {
     test('models authentication input without storing a plaintext secret', () {
-      const request = SshAuthenticationRequest.publicKey(username: 'researcher');
+      const request = SshAuthenticationRequest.publicKey(\n        username: 'researcher',\n      );
 
       expect(request.username, 'researcher');
       expect(request.method, SshAuthenticationMethod.publicKey);
