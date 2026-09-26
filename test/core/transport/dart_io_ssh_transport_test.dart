@@ -6,7 +6,8 @@ import 'package:universal_ssh/core/ssh/ssh_contracts.dart';
 import 'package:universal_ssh/core/transport/dart_io_ssh_transport.dart';
 
 void main() {
-  test('DartIoSshTransport delegates TCP lifecycle to its socket boundary', () async {
+  test('DartIoSshTransport delegates TCP lifecycle to its socket boundary',
+      () async {
     final socket = _FakeSocket();
     String? connectedHost;
     int? connectedPort;
