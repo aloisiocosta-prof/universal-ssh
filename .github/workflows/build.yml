@@ -2,17 +2,73 @@ name: Build
 on:
   push:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "web/**"
+      - "android/**"
+      - "uwp/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/build.yml"
+      - ".github/workflows/quality.yml"
   pull_request:
     branches: [main]
+    paths:
+      - "lib/**"
+      - "test/**"
+      - "web/**"
+      - "android/**"
+      - "uwp/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/build.yml"
+      - ".github/workflows/quality.yml"
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
+  changes:
+    name: Detect affected build surfaces
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      web: ${{ steps.filter.outputs.web }}
+      android: ${{ steps.filter.outputs.android }}
+      uwp: ${{ steps.filter.outputs.uwp }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'lib/**'
+              - 'test/**'
+              - 'pubspec.yaml'
+              - 'pubspec.lock'
+            web:
+              - 'web/**'
+            android:
+              - 'android/**'
+            uwp:
+              - 'uwp/**'
+            ci:
+              - '.github/workflows/build.yml'
+              - '.github/workflows/quality.yml'
+
   quality-gate:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.ci == 'true'
     uses: ./.github/workflows/quality.yml
 
   build-web:
-    needs: quality-gate
+    needs: [changes, quality-gate]
+    if: always() && (needs.changes.outputs.shared == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.uwp == 'true' || needs.changes.outputs.ci == 'true') && (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +103,8 @@ jobs:
         uses: actions/deploy-pages@v4
 
   build-android:
-    needs: quality-gate
+    needs: [changes, quality-gate]
+    if: always() && (needs.changes.outputs.shared == 'true' || needs.changes.outputs.android == 'true' || needs.changes.outputs.ci == 'true') && (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,8 +118,10 @@ jobs:
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with: {name: android-apk, path: build/app/outputs/flutter-apk/*.apk, if-no-files-found: error}
+
   build-uwp-x64:
-    needs: [quality-gate, build-web]
+    needs: [changes, quality-gate, build-web]
+    if: always() && (needs.changes.outputs.shared == 'true' || needs.changes.outputs.web == 'true' || needs.changes.outputs.uwp == 'true' || needs.changes.outputs.ci == 'true') && (needs.quality-gate.result == 'success' || needs.quality-gate.result == 'skipped') && needs.build-web.result == 'success'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
