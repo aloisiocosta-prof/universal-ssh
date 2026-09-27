@@ -17,19 +17,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dependency-review:
-    name: Dependency Review
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: moderate
-
-  scheduled-security:
-    name: Scheduled dependency and secret audit
-    if: github.event_name != 'pull_request'
+  security-audit:
+    name: Dependency and secret audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,10 +26,22 @@ jobs:
         with:
           channel: stable
           cache: true
-      - run: flutter pub get
-      - name: Dependency audit
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Dart dependency audit
         run: dart pub outdated --no-dependency-overrides
       - name: Secret pattern gate
         shell: bash
         run: |
           ! grep -RInE --exclude-dir=.git --exclude='*.lock' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,})' .
+
+  dependency-review-prerequisite:
+    name: Dependency Review prerequisite
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record unavailable native dependency review
+        run: |
+          echo "::notice::GitHub Dependency Review requires Dependency Graph."
+          echo "::notice::It is currently unavailable for this repository; enable Dependency Graph in repository Security Analysis settings before promoting it to a required gate."
+          echo "Executable dependency and secret controls are enforced by the Security audit job."
