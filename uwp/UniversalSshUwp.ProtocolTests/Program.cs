@@ -69,6 +69,15 @@ static class BridgeProtocolTests
         if (BridgeEvent.Data(new byte[] { 0x53, 0x53, 0x48 }).ToJson() != """{"type":"data","payload":"U1NI"}""") return 16;
         if (BridgeEvent.Closed().ToJson() != """{"type":"closed"}""") return 17;
         if (BridgeEvent.Error("socket_error", "Connection failed").ToJson() != """{"type":"error","code":"socket_error","message":"Connection failed"}""") return 18;
+
+        string? emittedJson = null;
+        var emitter = new BridgeEventEmitter(json =>
+        {
+            emittedJson = json;
+            return Task.CompletedTask;
+        });
+        await emitter.EmitAsync(BridgeEvent.Data(new byte[] { 0x53, 0x53, 0x48 }));
+        if (emittedJson != """{"type":"data","payload":"U1NI"}""") return 19;
         return 0;
     }
 }
