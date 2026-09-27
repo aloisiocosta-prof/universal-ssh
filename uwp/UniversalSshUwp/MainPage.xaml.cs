@@ -10,6 +10,8 @@ namespace UniversalSshUwp
 
         public MainPage()
         {
+            BridgeSocket nativeSocket = new WinRtBridgeSocket();
+            _ = nativeSocket;
             InitializeComponent();
             Application.Current.RequiresPointerMode = ApplicationRequiresPointerMode.WhenRequested;
             _bridgeHost = new BridgeHostController(
