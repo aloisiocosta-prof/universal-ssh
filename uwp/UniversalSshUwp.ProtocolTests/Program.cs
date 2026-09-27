@@ -97,6 +97,7 @@ static class BridgeProtocolTests
 
 sealed class RecordingBridgeSocket : BridgeSocket
 {
+    public Func<BridgeEvent, Task>? EventSink { get; set; }
     public string? Host { get; private set; }
     public int Port { get; private set; }
     public byte[]? Bytes { get; private set; }
@@ -124,6 +125,7 @@ sealed class RecordingBridgeSocket : BridgeSocket
 
 sealed class AsyncRecordingBridgeSocket : BridgeSocket
 {
+    public Func<BridgeEvent, Task>? EventSink { get; set; }
     private readonly List<string> _operations = new();
     public string Operations => string.Join(",", _operations);
 
@@ -150,6 +152,7 @@ sealed class AsyncRecordingBridgeSocket : BridgeSocket
 sealed class EventRecordingBridgeSocket : BridgeSocket
 {
     private readonly Func<BridgeEvent, Task> _emit;
+    public Func<BridgeEvent, Task>? EventSink { get; set; }
 
     public EventRecordingBridgeSocket(Func<BridgeEvent, Task> emit)
     {
