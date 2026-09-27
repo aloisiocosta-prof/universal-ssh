@@ -27,6 +27,11 @@ static class BridgeProtocolTests
         }
         catch (FormatException) { }
 
+        BridgeCommand? dispatched = null;
+        var dispatcher = new BridgeCommandDispatcher(command => dispatched = command);
+        dispatcher.Dispatch("""{"type":"close"}""");
+        if (dispatched is not CloseBridgeCommand) return 6;
+
         return 0;
     }
 }

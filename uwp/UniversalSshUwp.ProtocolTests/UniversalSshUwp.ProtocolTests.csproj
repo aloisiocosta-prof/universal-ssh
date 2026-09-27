@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\UniversalSshUwp\BridgeCommand.cs" Link="BridgeCommand.cs" />
+    <Compile Include="..\UniversalSshUwp\BridgeCommandDispatcher.cs" Link="BridgeCommandDispatcher.cs" />
   </ItemGroup>
 </Project>
