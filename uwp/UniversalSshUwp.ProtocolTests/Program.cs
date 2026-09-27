@@ -3,7 +3,7 @@ using UniversalSshUwp;
 
 static class BridgeProtocolTests
 {
-    static int Main()
+    static async Task<int> Main()
     {
         var connect = BridgeCommand.Parse("""{"type":"connect","host":"ssh.example.test","port":22}""");
         if (connect is not ConnectBridgeCommand c || c.Host != "ssh.example.test" || c.Port != 22) return 1;
@@ -58,6 +58,12 @@ static class BridgeProtocolTests
         if (Convert.ToBase64String(composedSocket.Bytes ?? Array.Empty<byte>()) != "U1NI") return 12;
         if (!composedSocket.Closed) return 13;
 
+        var asyncSocket = new AsyncRecordingBridgeSocket();
+        var asyncHost = BridgeHostController.ForSocket(asyncSocket);
+        await asyncHost.ReceiveAsync("""{"type":"connect","host":"ssh.example.test","port":22}""");
+        await asyncHost.ReceiveAsync("""{"type":"data","payload":"U1NI"}""");
+        await asyncHost.ReceiveAsync("""{"type":"close"}""");
+        if (asyncSocket.Operations != "connect,data,close") return 14;
         return 0;
     }
 }
@@ -84,5 +90,29 @@ sealed class RecordingBridgeSocket : BridgeSocket
     public void Close()
     {
         Closed = true;
+    }
+}
+
+sealed class AsyncRecordingBridgeSocket : BridgeSocket
+{
+    private readonly List<string> _operations = new();
+    public string Operations => string.Join(",", _operations);
+
+    public async Task ConnectAsync(string host, int port)
+    {
+        await Task.Yield();
+        _operations.Add("connect");
+    }
+
+    public async Task WriteAsync(byte[] bytes)
+    {
+        await Task.Yield();
+        _operations.Add("data");
+    }
+
+    public async Task CloseAsync()
+    {
+        await Task.Yield();
+        _operations.Add("close");
     }
 }
