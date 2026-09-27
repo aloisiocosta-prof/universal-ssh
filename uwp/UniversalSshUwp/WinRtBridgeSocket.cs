@@ -11,6 +11,8 @@ public sealed class WinRtBridgeSocket : BridgeSocket
     private StreamSocket? _socket;
     private DataWriter? _writer;
 
+    public Func<BridgeEvent, Task>? EventSink { get; set; }
+
     public async Task ConnectAsync(string host, int port)
     {
         if (_socket is not null)
@@ -24,6 +26,10 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             await socket.ConnectAsync(new HostName(host), port.ToString());
             _socket = socket;
             _writer = new DataWriter(socket.OutputStream);
+            if (EventSink is not null)
+            {
+                await EventSink(BridgeEvent.Connected());
+            }
         }
         catch
         {
@@ -39,12 +45,15 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         await writer.StoreAsync();
     }
 
-    public Task CloseAsync()
+    public async Task CloseAsync()
     {
         _writer?.Dispose();
         _writer = null;
         _socket?.Dispose();
         _socket = null;
-        return Task.CompletedTask;
+        if (EventSink is not null)
+        {
+            await EventSink(BridgeEvent.Closed());
+        }
     }
 }

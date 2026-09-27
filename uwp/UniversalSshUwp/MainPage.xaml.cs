@@ -13,8 +13,9 @@ namespace UniversalSshUwp
         {
             InitializeComponent();
             Application.Current.RequiresPointerMode = ApplicationRequiresPointerMode.WhenRequested;
-            _bridgeHost = BridgeHostController.ForSocket(new WinRtBridgeSocket());
             _bridgeEvents = new BridgeEventEmitter(EmitBridgeEventJsonAsync);
+            var socket = new WinRtBridgeSocket { EventSink = _bridgeEvents.EmitAsync };
+            _bridgeHost = BridgeHostController.ForSocket(socket);
             FlutterView.Navigate(new Uri("ms-appx-web:///Web/index.html"));
         }
 
