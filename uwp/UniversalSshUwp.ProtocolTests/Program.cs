@@ -40,6 +40,40 @@ static class BridgeProtocolTests
             hc.Host != "ssh.example.test" ||
             hc.Port != 22) return 7;
 
+        var socket = new RecordingBridgeSocket();
+        var handler = new BridgeSocketCommandHandler(socket);
+        handler.Handle(new ConnectBridgeCommand("ssh.example.test", 22));
+        handler.Handle(new DataBridgeCommand(new byte[] { 0x53, 0x53, 0x48 }));
+        handler.Handle(new CloseBridgeCommand());
+        if (socket.Host != "ssh.example.test" || socket.Port != 22) return 8;
+        if (Convert.ToBase64String(socket.Bytes ?? Array.Empty<byte>()) != "U1NI") return 9;
+        if (!socket.Closed) return 10;
+
         return 0;
+    }
+}
+
+
+sealed class RecordingBridgeSocket : BridgeSocket
+{
+    public string? Host { get; private set; }
+    public int Port { get; private set; }
+    public byte[]? Bytes { get; private set; }
+    public bool Closed { get; private set; }
+
+    public void Connect(string host, int port)
+    {
+        Host = host;
+        Port = port;
+    }
+
+    public void Write(byte[] bytes)
+    {
+        Bytes = bytes;
+    }
+
+    public void Close()
+    {
+        Closed = true;
     }
 }
