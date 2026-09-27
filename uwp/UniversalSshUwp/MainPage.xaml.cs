@@ -16,9 +16,9 @@ namespace UniversalSshUwp
             FlutterView.Navigate(new Uri("ms-appx-web:///Web/index.html"));
         }
 
-        private void OnScriptNotify(object sender, NotifyEventArgs e)
+        private async void OnScriptNotify(object sender, NotifyEventArgs e)
         {
-            _ = _bridgeHost.ReceiveAsync(e.Value);
+            await _bridgeHost.ReceiveAsync(e.Value);
         }
 
     }
