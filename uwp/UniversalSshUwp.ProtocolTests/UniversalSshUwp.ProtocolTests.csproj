@@ -12,6 +12,7 @@
     <Compile Include="..\UniversalSshUwp\BridgeCommandDispatcher.cs" Link="BridgeCommandDispatcher.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeHostController.cs" Link="BridgeHostController.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocket.cs" Link="BridgeSocket.cs" />
+    <Compile Include="..\UniversalSshUwp\BridgeSocketDataForwarder.cs" Link="BridgeSocketDataForwarder.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocketCommandHandler.cs" Link="BridgeSocketCommandHandler.cs" />
   </ItemGroup>
 </Project>
