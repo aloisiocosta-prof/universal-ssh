@@ -32,6 +32,14 @@ static class BridgeProtocolTests
         dispatcher.Dispatch("""{"type":"close"}""");
         if (dispatched is not CloseBridgeCommand) return 6;
 
+        BridgeCommand? hostCommand = null;
+        var host = new BridgeHostController(
+            new BridgeCommandDispatcher(command => hostCommand = command));
+        host.Receive("""{"type":"connect","host":"ssh.example.test","port":22}""");
+        if (hostCommand is not ConnectBridgeCommand hc ||
+            hc.Host != "ssh.example.test" ||
+            hc.Port != 22) return 7;
+
         return 0;
     }
 }
