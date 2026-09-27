@@ -90,6 +90,16 @@ static class BridgeProtocolTests
         if (socketEvent?.ToJson() != """{"type":"connected"}""") return 20;
         await eventSocket.CloseAsync();
         if (socketEvent?.ToJson() != """{"type":"closed"}""") return 21;
+
+        BridgeEvent? dataEvent = null;
+        var dataForwarder = new BridgeSocketDataForwarder(
+            bridgeEvent =>
+            {
+                dataEvent = bridgeEvent;
+                return Task.CompletedTask;
+            });
+        await dataForwarder.ForwardAsync(new byte[] { 0x53, 0x53, 0x48 });
+        if (dataEvent?.ToJson() != """{"type":"data","payload":"U1NI"}""") return 22;
         return 0;
     }
 }
