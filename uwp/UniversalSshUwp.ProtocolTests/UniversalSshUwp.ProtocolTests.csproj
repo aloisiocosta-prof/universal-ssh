@@ -8,5 +8,6 @@
   <ItemGroup>
     <Compile Include="..\UniversalSshUwp\BridgeCommand.cs" Link="BridgeCommand.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeCommandDispatcher.cs" Link="BridgeCommandDispatcher.cs" />
+    <Compile Include="..\UniversalSshUwp\BridgeHostController.cs" Link="BridgeHostController.cs" />
   </ItemGroup>
 </Project>
