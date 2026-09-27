@@ -78,6 +78,18 @@ static class BridgeProtocolTests
         });
         await emitter.EmitAsync(BridgeEvent.Data(new byte[] { 0x53, 0x53, 0x48 }));
         if (emittedJson != """{"type":"data","payload":"U1NI"}""") return 19;
+
+        BridgeEvent? socketEvent = null;
+        var eventSocket = new EventRecordingBridgeSocket(
+            bridgeEvent =>
+            {
+                socketEvent = bridgeEvent;
+                return Task.CompletedTask;
+            });
+        await eventSocket.ConnectAsync("ssh.example.test", 22);
+        if (socketEvent?.ToJson() != """{"type":"connected"}""") return 20;
+        await eventSocket.CloseAsync();
+        if (socketEvent?.ToJson() != """{"type":"closed"}""") return 21;
         return 0;
     }
 }
@@ -131,5 +143,28 @@ sealed class AsyncRecordingBridgeSocket : BridgeSocket
     {
         await Task.Yield();
         _operations.Add("close");
+    }
+}
+
+
+sealed class EventRecordingBridgeSocket : BridgeSocket
+{
+    private readonly Func<BridgeEvent, Task> _emit;
+
+    public EventRecordingBridgeSocket(Func<BridgeEvent, Task> emit)
+    {
+        _emit = emit;
+    }
+
+    public async Task ConnectAsync(string host, int port)
+    {
+        await _emit(BridgeEvent.Connected());
+    }
+
+    public Task WriteAsync(byte[] bytes) => Task.CompletedTask;
+
+    public async Task CloseAsync()
+    {
+        await _emit(BridgeEvent.Closed());
     }
 }
