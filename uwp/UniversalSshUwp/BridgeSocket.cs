@@ -1,8 +1,10 @@
+using System.Threading.Tasks;
+
 namespace UniversalSshUwp;
 
 public interface BridgeSocket
 {
-    void Connect(string host, int port);
-    void Write(byte[] bytes);
-    void Close();
+    Task ConnectAsync(string host, int port);
+    Task WriteAsync(byte[] bytes);
+    Task CloseAsync();
 }
