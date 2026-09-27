@@ -119,6 +119,17 @@ static class BridgeProtocolTests
         if (forwarded.Count != 2) return 23;
         if (forwarded[0] != """{"type":"data","payload":"U1M="}""") return 24;
         if (forwarded[1] != """{"type":"data","payload":"SA=="}""") return 25;
+
+        BridgeEvent? readError = null;
+        var supervisor = new BridgeSocketTaskSupervisor(
+            bridgeEvent =>
+            {
+                readError = bridgeEvent;
+                return Task.CompletedTask;
+            });
+        await supervisor.RunAsync(
+            () => Task.FromException(new InvalidOperationException("read failed")));
+        if (readError?.ToJson() != """{"type":"error","code":"socket_error","message":"read failed"}""") return 26;
         return 0;
     }
 }
