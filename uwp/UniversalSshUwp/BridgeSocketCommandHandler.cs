@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace UniversalSshUwp;
 
@@ -11,21 +12,12 @@ public sealed class BridgeSocketCommandHandler
         _socket = socket ?? throw new ArgumentNullException(nameof(socket));
     }
 
-    public void Handle(BridgeCommand command)
-    {
-        switch (command)
+    public Task HandleAsync(BridgeCommand command) =>
+        command switch
         {
-            case ConnectBridgeCommand connect:
-                _socket.Connect(connect.Host, connect.Port);
-                break;
-            case DataBridgeCommand data:
-                _socket.Write(data.Bytes);
-                break;
-            case CloseBridgeCommand:
-                _socket.Close();
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(command));
-        }
-    }
+            ConnectBridgeCommand connect => _socket.ConnectAsync(connect.Host, connect.Port),
+            DataBridgeCommand data => _socket.WriteAsync(data.Bytes),
+            CloseBridgeCommand => _socket.CloseAsync(),
+            _ => throw new ArgumentOutOfRangeException(nameof(command)),
+        };
 }
