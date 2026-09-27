@@ -49,6 +49,15 @@ static class BridgeProtocolTests
         if (Convert.ToBase64String(socket.Bytes ?? Array.Empty<byte>()) != "U1NI") return 9;
         if (!socket.Closed) return 10;
 
+        var composedSocket = new RecordingBridgeSocket();
+        var composedHost = BridgeHostController.ForSocket(composedSocket);
+        composedHost.Receive("""{"type":"connect","host":"ssh.example.test","port":22}""");
+        composedHost.Receive("""{"type":"data","payload":"U1NI"}""");
+        composedHost.Receive("""{"type":"close"}""");
+        if (composedSocket.Host != "ssh.example.test" || composedSocket.Port != 22) return 11;
+        if (Convert.ToBase64String(composedSocket.Bytes ?? Array.Empty<byte>()) != "U1NI") return 12;
+        if (!composedSocket.Closed) return 13;
+
         return 0;
     }
 }
