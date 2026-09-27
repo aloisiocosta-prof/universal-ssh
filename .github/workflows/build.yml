@@ -153,6 +153,10 @@ jobs:
           if ($properties.PublishAot -ne "true") { throw "UWP project must keep Native AOT enabled." }
           if ($properties.SelfContained -ne "true") { throw "Native AOT UWP package must be self-contained." }
 
+      - name: Run UWP host protocol tests
+        shell: pwsh
+        run: dotnet run --project uwp/UniversalSshUwp.ProtocolTests/UniversalSshUwp.ProtocolTests.csproj -c Release
+
       - uses: microsoft/setup-msbuild@v2
       - name: Build unsigned UWP x64 package
         shell: pwsh
