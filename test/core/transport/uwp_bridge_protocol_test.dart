@@ -32,3 +32,5 @@ void main() {
     });
   });
 }
+
+// CI synchronization marker: protocol contract intentionally unchanged.
