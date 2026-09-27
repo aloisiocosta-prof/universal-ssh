@@ -50,3 +50,43 @@ final class UwpBridgeCloseMessage extends UwpBridgeMessage {
   @override
   Map<String, Object> toJson() => {'type': 'close'};
 }
+
+sealed class UwpBridgeEvent {
+  const UwpBridgeEvent();
+
+  factory UwpBridgeEvent.fromJson(Map<String, Object> json) =>
+      switch (json['type']) {
+        'connected' => const UwpBridgeConnectedEvent(),
+        'data' => UwpBridgeDataEvent(base64Decode(json['payload']! as String)),
+        'closed' => const UwpBridgeClosedEvent(),
+        'error' => UwpBridgeErrorEvent(
+            code: json['code']! as String,
+            message: json['message']! as String,
+          ),
+        final type => throw FormatException('Unknown UWP bridge event: $type'),
+      };
+}
+
+final class UwpBridgeConnectedEvent extends UwpBridgeEvent {
+  const UwpBridgeConnectedEvent();
+}
+
+final class UwpBridgeDataEvent extends UwpBridgeEvent {
+  const UwpBridgeDataEvent(this.bytes);
+
+  final List<int> bytes;
+}
+
+final class UwpBridgeClosedEvent extends UwpBridgeEvent {
+  const UwpBridgeClosedEvent();
+}
+
+final class UwpBridgeErrorEvent extends UwpBridgeEvent {
+  const UwpBridgeErrorEvent({
+    required this.code,
+    required this.message,
+  });
+
+  final String code;
+  final String message;
+}
