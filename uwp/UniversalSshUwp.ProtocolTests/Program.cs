@@ -100,6 +100,25 @@ static class BridgeProtocolTests
             });
         await dataForwarder.ForwardAsync(new byte[] { 0x53, 0x53, 0x48 });
         if (dataEvent?.ToJson() != """{"type":"data","payload":"U1NI"}""") return 22;
+
+        var chunks = new Queue<byte[]?>(new byte[]?[]
+        {
+            new byte[] { 0x53, 0x53 },
+            new byte[] { 0x48 },
+            null,
+        });
+        var forwarded = new List<string>();
+        var readLoop = new BridgeSocketReadLoop(
+            () => Task.FromResult(chunks.Dequeue()),
+            bridgeEvent =>
+            {
+                forwarded.Add(bridgeEvent.ToJson());
+                return Task.CompletedTask;
+            });
+        await readLoop.RunAsync();
+        if (forwarded.Count != 2) return 23;
+        if (forwarded[0] != """{"type":"data","payload":"U1M="}""") return 24;
+        if (forwarded[1] != """{"type":"data","payload":"SA=="}""") return 25;
         return 0;
     }
 }
