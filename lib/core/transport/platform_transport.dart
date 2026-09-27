@@ -1,17 +1,17 @@
 import '../ssh/ssh_contracts.dart';
 
-enum SshRuntimePlatform { web, android, uwp }
+enum SshRuntimePlatform { web, android, uwpWebView }
 
 SshTransportCapabilities transportCapabilitiesFor(
         SshRuntimePlatform platform) =>
     switch (platform) {
-      SshRuntimePlatform.web => const SshTransportCapabilities(
+      SshRuntimePlatform.web ||
+      SshRuntimePlatform.uwpWebView =>
+        const SshTransportCapabilities(
           rawTcp: false,
           requiresBridge: true,
         ),
-      SshRuntimePlatform.android ||
-      SshRuntimePlatform.uwp =>
-        const SshTransportCapabilities(
+      SshRuntimePlatform.android => const SshTransportCapabilities(
           rawTcp: true,
           requiresBridge: false,
         ),
