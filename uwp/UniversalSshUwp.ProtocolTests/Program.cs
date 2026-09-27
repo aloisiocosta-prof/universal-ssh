@@ -64,6 +64,11 @@ static class BridgeProtocolTests
         await asyncHost.ReceiveAsync("""{"type":"data","payload":"U1NI"}""");
         await asyncHost.ReceiveAsync("""{"type":"close"}""");
         if (asyncSocket.Operations != "connect,data,close") return 14;
+
+        if (BridgeEvent.Connected().ToJson() != """{"type":"connected"}""") return 15;
+        if (BridgeEvent.Data(new byte[] { 0x53, 0x53, 0x48 }).ToJson() != """{"type":"data","payload":"U1NI"}""") return 16;
+        if (BridgeEvent.Closed().ToJson() != """{"type":"closed"}""") return 17;
+        if (BridgeEvent.Error("socket_error", "Connection failed").ToJson() != """{"type":"error","code":"socket_error","message":"Connection failed"}""") return 18;
         return 0;
     }
 }
