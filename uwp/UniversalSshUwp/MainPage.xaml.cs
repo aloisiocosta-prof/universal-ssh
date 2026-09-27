@@ -10,23 +10,16 @@ namespace UniversalSshUwp
 
         public MainPage()
         {
-            BridgeSocket nativeSocket = new WinRtBridgeSocket();
-            _ = nativeSocket;
             InitializeComponent();
             Application.Current.RequiresPointerMode = ApplicationRequiresPointerMode.WhenRequested;
-            _bridgeHost = new BridgeHostController(
-                new BridgeCommandDispatcher(OnBridgeCommand));
+            _bridgeHost = BridgeHostController.ForSocket(new WinRtBridgeSocket());
             FlutterView.Navigate(new Uri("ms-appx-web:///Web/index.html"));
         }
 
-        private void OnScriptNotify(object sender, NotifyEventArgs e)
+        private async void OnScriptNotify(object sender, NotifyEventArgs e)
         {
-            _bridgeHost.Receive(e.Value);
+            await _bridgeHost.ReceiveAsync(e.Value);
         }
 
-        private static void OnBridgeCommand(BridgeCommand command)
-        {
-            _ = command;
-        }
     }
 }
