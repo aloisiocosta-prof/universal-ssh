@@ -44,7 +44,14 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         }
         catch
         {
-            socket.Dispose();
+            if (_socket is null)
+            {
+                socket.Dispose();
+            }
+            else
+            {
+                await CreateCleanup().RunAsync();
+            }
             throw;
         }
     }
@@ -70,22 +77,38 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         return bytes;
     }
 
+    private BridgeSocketCleanup CreateCleanup() =>
+        new(
+            cancelRead: () => _readCancellation?.Cancel(),
+            awaitRead: async () =>
+            {
+                if (_readTask is not null)
+                {
+                    await _readTask;
+                }
+            },
+            disposeReader: () =>
+            {
+                _readCancellation?.Dispose();
+                _readCancellation = null;
+                _readTask = null;
+                _reader?.Dispose();
+                _reader = null;
+            },
+            disposeWriter: () =>
+            {
+                _writer?.Dispose();
+                _writer = null;
+            },
+            disposeSocket: () =>
+            {
+                _socket?.Dispose();
+                _socket = null;
+            });
+
     public async Task CloseAsync()
     {
-        _readCancellation?.Cancel();
-        if (_readTask is not null)
-        {
-            await _readTask;
-        }
-        _readCancellation?.Dispose();
-        _readCancellation = null;
-        _readTask = null;
-        _reader?.Dispose();
-        _reader = null;
-        _writer?.Dispose();
-        _writer = null;
-        _socket?.Dispose();
-        _socket = null;
+        await CreateCleanup().RunAsync();
         if (EventSink is not null)
         {
             await EventSink(BridgeEvent.Closed());

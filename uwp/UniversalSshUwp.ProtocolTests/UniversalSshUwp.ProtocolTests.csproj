@@ -13,6 +13,7 @@
     <Compile Include="..\UniversalSshUwp\BridgeHostController.cs" Link="BridgeHostController.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocket.cs" Link="BridgeSocket.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocketEventSink.cs" Link="BridgeSocketEventSink.cs" />
+    <Compile Include="..\UniversalSshUwp\BridgeSocketCleanup.cs" Link="BridgeSocketCleanup.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocketDataForwarder.cs" Link="BridgeSocketDataForwarder.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocketReadLoop.cs" Link="BridgeSocketReadLoop.cs" />
     <Compile Include="..\UniversalSshUwp\BridgeSocketTaskSupervisor.cs" Link="BridgeSocketTaskSupervisor.cs" />
