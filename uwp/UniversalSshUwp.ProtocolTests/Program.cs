@@ -244,6 +244,27 @@ static class BridgeProtocolTests
             return Task.CompletedTask;
         });
         if (!afterFailureEntered) return 40;
+
+        var closeGate = new BridgeSocketWriteGate();
+        var activeWriteEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseActiveWrite = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var activeWrite = closeGate.RunAsync(async () =>
+        {
+            activeWriteEntered.SetResult(true);
+            await releaseActiveWrite.Task;
+        });
+        await activeWriteEntered.Task;
+        var closeEntered = false;
+        var closeDrain = closeGate.DrainAsync(() =>
+        {
+            closeEntered = true;
+            return Task.CompletedTask;
+        });
+        await Task.Yield();
+        if (closeEntered) return 41;
+        releaseActiveWrite.SetResult(true);
+        await Task.WhenAll(activeWrite, closeDrain);
+        if (!closeEntered) return 42;
         return 0;
     }
 }
