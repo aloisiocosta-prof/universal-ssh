@@ -15,6 +15,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
     private DataReader? _reader;
     private Task? _readTask;
     private CancellationTokenSource? _readCancellation;
+    private readonly BridgeSocketLifecycle _lifecycle = new();
 
     public Func<BridgeEvent, Task>? EventSink { get; set; }
 
@@ -37,6 +38,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
                 InputStreamOptions = InputStreamOptions.Partial,
             };
             await eventSink(BridgeEvent.Connected());
+            _lifecycle.MarkConnected();
             _readCancellation = new CancellationTokenSource();
             var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, eventSink);
             var supervisor = new BridgeSocketTaskSupervisor(eventSink);
@@ -108,7 +110,20 @@ public sealed class WinRtBridgeSocket : BridgeSocket
 
     public async Task CloseAsync()
     {
-        await CreateCleanup().RunAsync();
+        if (!_lifecycle.TryBeginClose())
+        {
+            return;
+        }
+
+        try
+        {
+            await CreateCleanup().RunAsync();
+        }
+        finally
+        {
+            _lifecycle.MarkClosed();
+        }
+
         if (EventSink is not null)
         {
             await EventSink(BridgeEvent.Closed());
