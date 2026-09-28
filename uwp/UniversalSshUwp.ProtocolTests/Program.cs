@@ -130,6 +130,17 @@ static class BridgeProtocolTests
         await supervisor.RunAsync(
             () => Task.FromException(new InvalidOperationException("read failed")));
         if (readError?.ToJson() != """{"type":"error","code":"socket_error","message":"read failed"}""") return 26;
+
+        BridgeEvent? cancellationEvent = null;
+        var cancellationSupervisor = new BridgeSocketTaskSupervisor(
+            bridgeEvent =>
+            {
+                cancellationEvent = bridgeEvent;
+                return Task.CompletedTask;
+            });
+        await cancellationSupervisor.RunAsync(
+            () => Task.FromException(new OperationCanceledException()));
+        if (cancellationEvent is not null) return 27;
         return 0;
     }
 }
