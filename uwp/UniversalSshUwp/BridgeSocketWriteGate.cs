@@ -40,6 +40,14 @@ public sealed class BridgeSocketWriteGate
         }
     }
 
+    public void Reset()
+    {
+        lock (_stateGate)
+        {
+            _draining = false;
+        }
+    }
+
     public async Task DrainAsync(Func<Task> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
