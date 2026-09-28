@@ -1,5 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Networking;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
@@ -12,6 +14,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
     private DataWriter? _writer;
     private DataReader? _reader;
     private Task? _readTask;
+    private CancellationTokenSource? _readCancellation;
 
     public Func<BridgeEvent, Task>? EventSink { get; set; }
 
@@ -35,9 +38,10 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             if (EventSink is not null)
             {
                 await EventSink(BridgeEvent.Connected());
-                var readLoop = new BridgeSocketReadLoop(_ => ReadChunkAsync(), EventSink);
+                _readCancellation = new CancellationTokenSource();
+                var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, EventSink);
                 var supervisor = new BridgeSocketTaskSupervisor(EventSink);
-                _readTask = supervisor.RunAsync(() => readLoop.RunAsync(System.Threading.CancellationToken.None));
+                _readTask = supervisor.RunAsync(() => readLoop.RunAsync(_readCancellation.Token));
             }
         }
         catch
@@ -54,10 +58,10 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         await writer.StoreAsync();
     }
 
-    private async Task<byte[]?> ReadChunkAsync()
+    private async Task<byte[]?> ReadChunkAsync(CancellationToken cancellationToken)
     {
         var reader = _reader ?? throw new InvalidOperationException("Socket is not connected.");
-        var loaded = await reader.LoadAsync(4096);
+        var loaded = await reader.LoadAsync(4096).AsTask(cancellationToken);
         if (loaded == 0)
         {
             return null;
@@ -70,9 +74,16 @@ public sealed class WinRtBridgeSocket : BridgeSocket
 
     public async Task CloseAsync()
     {
+        _readCancellation?.Cancel();
+        if (_readTask is not null)
+        {
+            await _readTask;
+        }
+        _readCancellation?.Dispose();
+        _readCancellation = null;
+        _readTask = null;
         _reader?.Dispose();
         _reader = null;
-        _readTask = null;
         _writer?.Dispose();
         _writer = null;
         _socket?.Dispose();
