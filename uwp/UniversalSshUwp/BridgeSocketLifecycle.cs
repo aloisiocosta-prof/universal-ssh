@@ -5,6 +5,31 @@ public sealed class BridgeSocketLifecycle
     private readonly object _gate = new();
     private State _state = State.Disconnected;
 
+    public bool TryBeginConnect()
+    {
+        lock (_gate)
+        {
+            if (_state is not (State.Disconnected or State.Closed))
+            {
+                return false;
+            }
+
+            _state = State.Connecting;
+            return true;
+        }
+    }
+
+    public void MarkConnectFailed()
+    {
+        lock (_gate)
+        {
+            if (_state == State.Connecting)
+            {
+                _state = State.Disconnected;
+            }
+        }
+    }
+
     public void MarkConnected()
     {
         lock (_gate)
@@ -38,6 +63,7 @@ public sealed class BridgeSocketLifecycle
     private enum State
     {
         Disconnected,
+        Connecting,
         Connected,
         Closing,
         Closed,
