@@ -27,10 +27,28 @@ public sealed class BridgeSocketCleanup
 
     public async Task RunAsync()
     {
-        _cancelRead();
-        await _awaitRead();
-        _disposeReader();
-        _disposeWriter();
-        _disposeSocket();
+        try
+        {
+            _cancelRead();
+            await _awaitRead();
+        }
+        finally
+        {
+            try
+            {
+                _disposeReader();
+            }
+            finally
+            {
+                try
+                {
+                    _disposeWriter();
+                }
+                finally
+                {
+                    _disposeSocket();
+                }
+            }
+        }
     }
 }
