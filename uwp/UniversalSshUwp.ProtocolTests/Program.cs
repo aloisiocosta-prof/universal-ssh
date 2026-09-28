@@ -154,14 +154,10 @@ static class BridgeProtocolTests
         await cancellableLoop.RunAsync(cancellation.Token);
         if (observedToken != cancellation.Token) return 28;
 
-        var missingSinkSocket = new EventRecordingBridgeSocket(_ => Task.CompletedTask)
-        {
-            EventSink = null,
-        };
         var missingSinkRejected = false;
         try
         {
-            await missingSinkSocket.ConnectAsync("ssh.example.test", 22);
+            BridgeSocketEventSink.Require(null);
         }
         catch (InvalidOperationException)
         {
