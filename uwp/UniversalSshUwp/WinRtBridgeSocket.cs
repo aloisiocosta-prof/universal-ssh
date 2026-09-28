@@ -39,6 +39,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
                 InputStreamOptions = InputStreamOptions.Partial,
             };
             await eventSink(BridgeEvent.Connected());
+            _writeGate.Reset();
             _lifecycle.MarkConnected();
             _readCancellation = new CancellationTokenSource();
             var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, eventSink);
@@ -119,7 +120,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
 
         try
         {
-            await CreateCleanup().RunAsync();
+            await _writeGate.DrainAsync(() => CreateCleanup().RunAsync());
         }
         finally
         {
