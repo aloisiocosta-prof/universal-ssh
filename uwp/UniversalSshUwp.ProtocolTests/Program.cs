@@ -228,6 +228,22 @@ static class BridgeProtocolTests
         releaseFirst.SetResult(true);
         await Task.WhenAll(firstWrite, secondWrite);
         if (!secondEntered) return 38;
+
+        try
+        {
+            await writeGate.RunAsync(() => Task.FromException(new InvalidOperationException("write failure")));
+            return 39;
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        var afterFailureEntered = false;
+        await writeGate.RunAsync(() =>
+        {
+            afterFailureEntered = true;
+            return Task.CompletedTask;
+        });
+        if (!afterFailureEntered) return 40;
         return 0;
     }
 }
