@@ -25,6 +25,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             throw new InvalidOperationException("Socket is already connected.");
         }
 
+        var eventSink = BridgeSocketEventSink.Require(EventSink);
         var socket = new StreamSocket();
         try
         {
@@ -35,14 +36,11 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             {
                 InputStreamOptions = InputStreamOptions.Partial,
             };
-            if (EventSink is not null)
-            {
-                await EventSink(BridgeEvent.Connected());
-                _readCancellation = new CancellationTokenSource();
-                var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, EventSink);
-                var supervisor = new BridgeSocketTaskSupervisor(EventSink);
-                _readTask = supervisor.RunAsync(() => readLoop.RunAsync(_readCancellation.Token));
-            }
+            await eventSink(BridgeEvent.Connected());
+            _readCancellation = new CancellationTokenSource();
+            var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, eventSink);
+            var supervisor = new BridgeSocketTaskSupervisor(eventSink);
+            _readTask = supervisor.RunAsync(() => readLoop.RunAsync(_readCancellation.Token));
         }
         catch
         {
