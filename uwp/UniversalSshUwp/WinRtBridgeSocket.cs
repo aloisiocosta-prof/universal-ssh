@@ -16,6 +16,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
     private Task? _readTask;
     private CancellationTokenSource? _readCancellation;
     private readonly BridgeSocketLifecycle _lifecycle = new();
+    private readonly BridgeSocketWriteGate _writeGate = new();
 
     public Func<BridgeEvent, Task>? EventSink { get; set; }
 
@@ -58,12 +59,13 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         }
     }
 
-    public async Task WriteAsync(byte[] bytes)
-    {
-        var writer = _writer ?? throw new InvalidOperationException("Socket is not connected.");
-        writer.WriteBytes(bytes);
-        await writer.StoreAsync();
-    }
+    public Task WriteAsync(byte[] bytes) =>
+        _writeGate.RunAsync(async () =>
+        {
+            var writer = _writer ?? throw new InvalidOperationException("Socket is not connected.");
+            writer.WriteBytes(bytes);
+            await writer.StoreAsync();
+        });
 
     private async Task<byte[]?> ReadChunkAsync(CancellationToken cancellationToken)
     {
