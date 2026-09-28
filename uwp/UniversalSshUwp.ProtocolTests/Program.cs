@@ -265,6 +265,14 @@ static class BridgeProtocolTests
         releaseActiveWrite.SetResult(true);
         await Task.WhenAll(activeWrite, closeDrain);
         if (!closeEntered) return 42;
+        try
+        {
+            await closeGate.RunAsync(() => Task.CompletedTask);
+            return 43;
+        }
+        catch (InvalidOperationException)
+        {
+        }
         return 0;
     }
 }
