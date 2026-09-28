@@ -115,8 +115,15 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             return;
         }
 
-        await CreateCleanup().RunAsync();
-        _lifecycle.MarkClosed();
+        try
+        {
+            await CreateCleanup().RunAsync();
+        }
+        finally
+        {
+            _lifecycle.MarkClosed();
+        }
+
         if (EventSink is not null)
         {
             await EventSink(BridgeEvent.Closed());
