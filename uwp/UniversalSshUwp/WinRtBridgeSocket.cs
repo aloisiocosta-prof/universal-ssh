@@ -22,9 +22,9 @@ public sealed class WinRtBridgeSocket : BridgeSocket
 
     public async Task ConnectAsync(string host, int port)
     {
-        if (_socket is not null)
+        if (!_lifecycle.TryBeginConnect())
         {
-            throw new InvalidOperationException("Socket is already connected.");
+            throw new InvalidOperationException("Socket is already connecting or connected.");
         }
 
         var eventSink = BridgeSocketEventSink.Require(EventSink);
@@ -48,6 +48,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         }
         catch
         {
+            _lifecycle.MarkConnectFailed();
             if (_socket is null)
             {
                 socket.Dispose();
