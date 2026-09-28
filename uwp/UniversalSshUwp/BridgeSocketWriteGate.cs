@@ -7,17 +7,29 @@ namespace UniversalSshUwp;
 public sealed class BridgeSocketWriteGate
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
-    private bool _drained;
+    private readonly object _stateGate = new();
+    private bool _draining;
 
     public async Task RunAsync(Func<Task> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
+        lock (_stateGate)
+        {
+            if (_draining)
+            {
+                throw new InvalidOperationException("Socket is closing.");
+            }
+        }
+
         await _gate.WaitAsync();
         try
         {
-            if (_drained)
+            lock (_stateGate)
             {
-                throw new InvalidOperationException("Socket write gate is closed.");
+                if (_draining)
+                {
+                    throw new InvalidOperationException("Socket is closing.");
+                }
             }
 
             await operation();
@@ -31,10 +43,14 @@ public sealed class BridgeSocketWriteGate
     public async Task DrainAsync(Func<Task> operation)
     {
         ArgumentNullException.ThrowIfNull(operation);
+        lock (_stateGate)
+        {
+            _draining = true;
+        }
+
         await _gate.WaitAsync();
         try
         {
-            _drained = true;
             await operation();
         }
         finally
