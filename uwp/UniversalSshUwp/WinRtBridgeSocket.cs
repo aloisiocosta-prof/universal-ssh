@@ -35,9 +35,9 @@ public sealed class WinRtBridgeSocket : BridgeSocket
             if (EventSink is not null)
             {
                 await EventSink(BridgeEvent.Connected());
-                var readLoop = new BridgeSocketReadLoop(ReadChunkAsync, EventSink);
+                var readLoop = new BridgeSocketReadLoop(_ => ReadChunkAsync(), EventSink);
                 var supervisor = new BridgeSocketTaskSupervisor(EventSink);
-                _readTask = supervisor.RunAsync(readLoop.RunAsync);
+                _readTask = supervisor.RunAsync(() => readLoop.RunAsync(System.Threading.CancellationToken.None));
             }
         }
         catch

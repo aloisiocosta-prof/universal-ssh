@@ -109,13 +109,13 @@ static class BridgeProtocolTests
         });
         var forwarded = new List<string>();
         var readLoop = new BridgeSocketReadLoop(
-            () => Task.FromResult(chunks.Dequeue()),
+            _ => Task.FromResult(chunks.Dequeue()),
             bridgeEvent =>
             {
                 forwarded.Add(bridgeEvent.ToJson());
                 return Task.CompletedTask;
             });
-        await readLoop.RunAsync();
+        await readLoop.RunAsync(CancellationToken.None);
         if (forwarded.Count != 2) return 23;
         if (forwarded[0] != """{"type":"data","payload":"U1M="}""") return 24;
         if (forwarded[1] != """{"type":"data","payload":"SA=="}""") return 25;
@@ -141,6 +141,18 @@ static class BridgeProtocolTests
         await cancellationSupervisor.RunAsync(
             () => Task.FromException(new OperationCanceledException()));
         if (cancellationEvent is not null) return 27;
+
+        using var cancellation = new CancellationTokenSource();
+        CancellationToken observedToken = default;
+        var cancellableLoop = new BridgeSocketReadLoop(
+            token =>
+            {
+                observedToken = token;
+                return Task.FromResult<byte[]?>(null);
+            },
+            _ => Task.CompletedTask);
+        await cancellableLoop.RunAsync(cancellation.Token);
+        if (observedToken != cancellation.Token) return 28;
         return 0;
     }
 }
