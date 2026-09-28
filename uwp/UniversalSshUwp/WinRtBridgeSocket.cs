@@ -44,7 +44,14 @@ public sealed class WinRtBridgeSocket : BridgeSocket
         }
         catch
         {
-            socket.Dispose();
+            if (_socket is null)
+            {
+                socket.Dispose();
+            }
+            else
+            {
+                await CreateCleanup().RunAsync();
+            }
             throw;
         }
     }
