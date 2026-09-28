@@ -179,6 +179,27 @@ static class BridgeProtocolTests
         await cleanup.RunAsync();
         if (!cleanupOrder.SequenceEqual(new[] { "cancel", "await", "reader", "writer", "socket" })) return 30;
 
+        var failureCleanupOrder = new List<string>();
+        var failingCleanup = new BridgeSocketCleanup(
+            cancelRead: () => failureCleanupOrder.Add("cancel"),
+            awaitRead: () =>
+            {
+                failureCleanupOrder.Add("await");
+                return Task.FromException(new InvalidOperationException("read failure"));
+            },
+            disposeReader: () => failureCleanupOrder.Add("reader"),
+            disposeWriter: () => failureCleanupOrder.Add("writer"),
+            disposeSocket: () => failureCleanupOrder.Add("socket"));
+        try
+        {
+            await failingCleanup.RunAsync();
+            return 35;
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        if (!failureCleanupOrder.SequenceEqual(new[] { "cancel", "await", "reader", "writer", "socket" })) return 36;
+
         var lifecycle = new BridgeSocketLifecycle();
         if (lifecycle.TryBeginClose()) return 31;
         lifecycle.MarkConnected();
