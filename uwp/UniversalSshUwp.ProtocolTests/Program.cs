@@ -178,6 +178,14 @@ static class BridgeProtocolTests
             disposeSocket: () => cleanupOrder.Add("socket"));
         await cleanup.RunAsync();
         if (!cleanupOrder.SequenceEqual(new[] { "cancel", "await", "reader", "writer", "socket" })) return 30;
+
+        var lifecycle = new BridgeSocketLifecycle();
+        if (lifecycle.TryBeginClose()) return 31;
+        lifecycle.MarkConnected();
+        if (!lifecycle.TryBeginClose()) return 32;
+        if (lifecycle.TryBeginClose()) return 33;
+        lifecycle.MarkClosed();
+        if (lifecycle.TryBeginClose()) return 34;
         return 0;
     }
 }
