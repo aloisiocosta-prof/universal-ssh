@@ -119,7 +119,7 @@ public sealed class WinRtBridgeSocket : BridgeSocket
 
         try
         {
-            await CreateCleanup().RunAsync();
+            await _writeGate.DrainAsync(() => CreateCleanup().RunAsync());
         }
         finally
         {
