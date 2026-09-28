@@ -207,6 +207,27 @@ static class BridgeProtocolTests
         if (lifecycle.TryBeginClose()) return 33;
         lifecycle.MarkClosed();
         if (lifecycle.TryBeginClose()) return 34;
+
+        var writeGate = new BridgeSocketWriteGate();
+        var firstEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseFirst = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secondEntered = false;
+        var firstWrite = writeGate.RunAsync(async () =>
+        {
+            firstEntered.SetResult(true);
+            await releaseFirst.Task;
+        });
+        await firstEntered.Task;
+        var secondWrite = writeGate.RunAsync(() =>
+        {
+            secondEntered = true;
+            return Task.CompletedTask;
+        });
+        await Task.Yield();
+        if (secondEntered) return 37;
+        releaseFirst.SetResult(true);
+        await Task.WhenAll(firstWrite, secondWrite);
+        if (!secondEntered) return 38;
         return 0;
     }
 }
