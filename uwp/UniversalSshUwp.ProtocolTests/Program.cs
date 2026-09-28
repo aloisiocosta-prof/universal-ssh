@@ -153,6 +153,17 @@ static class BridgeProtocolTests
             _ => Task.CompletedTask);
         await cancellableLoop.RunAsync(cancellation.Token);
         if (observedToken != cancellation.Token) return 28;
+
+        var missingSinkRejected = false;
+        try
+        {
+            BridgeSocketEventSink.Require(null);
+        }
+        catch (InvalidOperationException)
+        {
+            missingSinkRejected = true;
+        }
+        if (!missingSinkRejected) return 29;
         return 0;
     }
 }
