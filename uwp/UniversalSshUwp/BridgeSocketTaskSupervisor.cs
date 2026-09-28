@@ -19,6 +19,10 @@ public sealed class BridgeSocketTaskSupervisor
         {
             await operation();
         }
+        catch (OperationCanceledException)
+        {
+            // Intentional socket shutdown is not a transport failure.
+        }
         catch (Exception error)
         {
             await _eventSink(BridgeEvent.Error("socket_error", error.Message));
