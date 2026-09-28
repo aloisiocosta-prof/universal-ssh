@@ -164,6 +164,20 @@ static class BridgeProtocolTests
             missingSinkRejected = true;
         }
         if (!missingSinkRejected) return 29;
+
+        var cleanupOrder = new List<string>();
+        var cleanup = new BridgeSocketCleanup(
+            cancelRead: () => cleanupOrder.Add("cancel"),
+            awaitRead: () =>
+            {
+                cleanupOrder.Add("await");
+                return Task.CompletedTask;
+            },
+            disposeReader: () => cleanupOrder.Add("reader"),
+            disposeWriter: () => cleanupOrder.Add("writer"),
+            disposeSocket: () => cleanupOrder.Add("socket"));
+        await cleanup.RunAsync();
+        if (!cleanupOrder.SequenceEqual(new[] { "cancel", "await", "reader", "writer", "socket" })) return 30;
         return 0;
     }
 }
