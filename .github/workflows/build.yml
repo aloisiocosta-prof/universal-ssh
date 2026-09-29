@@ -92,7 +92,12 @@ jobs:
               raise SystemExit(f'Expected 18 Mermaid architecture diagrams, found {count}')
           print(f'Validated catalog size: {count} diagrams')
           PY
-          npm exec --yes --package=@mermaid-js/mermaid-cli -- mmdc -i /tmp/mermaid -o /tmp/mermaid-rendered
+          mkdir -p /tmp/mermaid-rendered
+          for diagram in /tmp/mermaid/*.mmd; do
+            name="$(basename "$diagram" .mmd)"
+            echo "Rendering $name"
+            npm exec --yes --package=@mermaid-js/mermaid-cli -- mmdc -i "$diagram" -o "/tmp/mermaid-rendered/$name.svg"
+          done
 
   quality-gate:
     needs: changes
