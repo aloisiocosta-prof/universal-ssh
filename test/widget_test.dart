@@ -60,7 +60,7 @@ void main() {
     );
 
     await tester.enterText(find.byKey(const Key('terminal-input')), 'whoami');
-    tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(connector.session.written, 'whoami\r'.codeUnits);
 
