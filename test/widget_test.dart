@@ -75,8 +75,7 @@ void main() {
   });
 
   testWidgets('rejected host key never requests a password', (tester) async {
-    final connector = _FakeSshConnectable();
-    connector.acceptHostKey = false;
+    final connector = _FakeSshConnectable()..acceptHostKey = false;
     await tester.pumpWidget(UniversalSshApp(connector: connector));
     await _fillConnectionForm(tester);
 
@@ -89,6 +88,57 @@ void main() {
 
     expect(connector.passwordRequests, 0);
     expect(find.text('Erro'), findsOneWidget);
+  });
+
+  testWidgets('password cancellation never opens a shell', (tester) async {
+    final connector = _FakeSshConnectable();
+    await tester.pumpWidget(UniversalSshApp(connector: connector));
+    await _fillConnectionForm(tester);
+
+    await tester.tap(find.byKey(const Key('connect-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('accept-host-key')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.tap(find.text('Cancelar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(connector.passwordRequests, 1);
+    expect(connector.password, isNull);
+    expect(connector.session.closed, isFalse);
+    expect(find.text('Erro'), findsOneWidget);
+    expect(find.text('Conectado'), findsNothing);
+  });
+
+  testWidgets('authentication rejection hides raw error details', (tester) async {
+    final connector = _FakeSshConnectable()..rejectAuthentication = true;
+    await tester.pumpWidget(UniversalSshApp(connector: connector));
+    await _fillConnectionForm(tester);
+
+    await tester.tap(find.byKey(const Key('connect-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('accept-host-key')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    await tester.enterText(
+      find.byKey(const Key('password-field')),
+      'super-secret',
+    );
+    await tester.tap(find.byKey(const Key('submit-password')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(
+      find.text('A conexão SSH falhou. Verifique o destino e a autenticação.'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('super-secret'), findsNothing);
+    expect(find.text('Conectado'), findsNothing);
   });
 }
 
@@ -108,6 +158,7 @@ final class _FakeSshConnectable implements SshConnectable {
   int passwordRequests = 0;
   String? password;
   bool acceptHostKey = true;
+  bool rejectAuthentication = false;
 
   @override
   Future<SshTerminalSession> connect({
@@ -131,6 +182,9 @@ final class _FakeSshConnectable implements SshConnectable {
     passwordRequests++;
     password = await requestPassword();
     if (password == null) throw StateError('Authentication canceled.');
+    if (rejectAuthentication) {
+      throw StateError('PASSWORD authentication rejected: $password');
+    }
     return session;
   }
 }
