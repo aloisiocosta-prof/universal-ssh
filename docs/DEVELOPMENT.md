@@ -41,8 +41,7 @@ The shared Quality Gate covers formatting, static analysis, unit/widget tests, c
 dependency audit, secret patterns and a performance smoke test. The initial core coverage
 floor is 70%.
 
-The Security workflow complements it with GitHub Dependency Review on pull requests and
-scheduled dependency/secret audits. Security failures are not intentionally hidden with
+The Security workflow runs GitHub Dependency Review on pull requests, OSV Scanner against supported manifests/lockfiles, and scheduled dependency/secret audits. The Quality Gate's `flutter analyze` is Dart/Flutter static analysis; it is not represented as a dedicated Dart SAST engine. Security failures are not intentionally hidden with
 `continue-on-error`.
 
 ## Pull requests and audit trail
@@ -57,8 +56,7 @@ Issue -> branch -> commit SHA -> PR -> workflow run -> job/step
 A PR should identify acceptance criteria, test evidence, security impact and affected
 artifacts. TDD changes should preserve evidence of the intended RED and subsequent GREEN.
 
-Logs and large artifacts remain in GitHub Actions/Release according to configured retention;
-Git stores policies, source, small reproducible records and traceability metadata.
+Release builds are tag-driven in `.github/workflows/release.yml`, validate the tag against `pubspec.yaml`, publish Web and Android artifacts, and attach SHA-256 checksums to the GitHub Release. UWP signing remains unavailable until a signing certificate and protected environment are configured. Logs and large CI artifacts remain in GitHub Actions according to configured retention; Git stores policies, source, small reproducible records and traceability metadata.
 
 ## Definition of Done
 

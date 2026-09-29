@@ -1,0 +1,176 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing vMAJOR.MINOR.PATCH tag to release"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+      - name: Match tag to pubspec version and main
+        id: tag
+        shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then tag="$REQUESTED_TAG"; fi
+          version="$(sed -n 's/^version: *//p' pubspec.yaml | cut -d+ -f1)"
+          if [[ "${tag}" != "v${version}" ]]; then
+            echo "Tag ${tag} does not match pubspec version ${version}" >&2
+            exit 1
+          fi
+          git fetch origin main
+          git merge-base --is-ancestor "$tag" origin/main
+          echo "value=${tag}" >> "$GITHUB_OUTPUT"
+
+  osv-release-scan:
+    name: Scan release dependencies
+    needs: verify
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.6.0
+    with:
+      scan-args: |-
+        -r
+        .
+
+  build-web:
+    needs: [verify, osv-release-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=android,web --project-name universal_ssh .
+      - run: flutter pub get
+      - name: Build Web artifact for GitHub Pages
+        run: flutter build web --release --base-href /universal-ssh/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-ssh-web
+          path: build/web/
+          if-no-files-found: error
+      - name: Build Web artifact for the UWP WebView package
+        run: flutter build web --release --base-href /Web/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-ssh-uwp-web
+          path: build/web/
+          if-no-files-found: error
+
+  build-android:
+    needs: [verify, osv-release-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=android --project-name universal_ssh .
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-ssh-android
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+
+
+  build-uwp:
+    needs: [verify, osv-release-scan, build-web]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+      - uses: actions/download-artifact@v5
+        with:
+          name: universal-ssh-uwp-web
+          path: uwp/UniversalSshUwp/Web
+      - name: Generate placeholder UWP visual assets
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          New-Item -ItemType Directory -Force uwp/UniversalSshUwp/Assets | Out-Null
+          $sizes = @{"StoreLogo.png"=50;"Square44x44Logo.png"=44;"Square150x150Logo.png"=150;"Wide310x150Logo.png"=310;"SplashScreen.png"=620}
+          foreach ($item in $sizes.GetEnumerator()) {
+            $h = if ($item.Key -eq "Wide310x150Logo.png") {150} elseif ($item.Key -eq "SplashScreen.png") {300} else {$item.Value}
+            $bmp = New-Object System.Drawing.Bitmap($item.Value,$h)
+            $g=[System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::Black)
+            $bmp.Save((Join-Path "uwp/UniversalSshUwp/Assets" $item.Key),[System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose(); $bmp.Dispose()
+          }
+      - name: Run UWP host protocol tests
+        shell: pwsh
+        run: dotnet run --project uwp/UniversalSshUwp.ProtocolTests/UniversalSshUwp.ProtocolTests.csproj -c Release
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build unsigned UWP x64 package
+        shell: pwsh
+        run: msbuild uwp/UniversalSshUwp.sln /restore /p:Configuration=Release /p:Platform=x64 /p:AppxBundle=Never /p:GenerateAppxPackageOnBuild=true /p:AppxPackageSigningEnabled=false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-ssh-uwp-x64-unsigned
+          path: |
+            uwp/**/AppPackages/**/*.appx
+            uwp/**/AppPackages/**/*.msix
+          if-no-files-found: error
+
+  assemble-release:
+    needs: [verify, osv-release-scan, build-web, build-android, build-uwp]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+      - name: Generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release-assets -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS
+          cat release-assets/SHA256SUMS
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.verify.outputs.tag }}
+          generate_release_notes: true
+          files: release-assets/**/*
+          fail_on_unmatched_files: true
