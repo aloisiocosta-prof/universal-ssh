@@ -11,6 +11,7 @@ on:
       - "pubspec.yaml"
       - "pubspec.lock"
       - ".github/workflows/build.yml"
+      - ".github/workflows/release.yml"
       - ".github/workflows/quality.yml"
       - "docs/architecture/**"
       - "README.md"
@@ -25,6 +26,7 @@ on:
       - "pubspec.yaml"
       - "pubspec.lock"
       - ".github/workflows/build.yml"
+      - ".github/workflows/release.yml"
       - ".github/workflows/quality.yml"
       - "docs/architecture/**"
       - "README.md"
@@ -195,6 +197,42 @@ jobs:
       - name: Deploy exact build/web artifact
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify published GitHub Pages
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$PAGE_URL" ]]; then
+            echo "The Pages deployment did not return a URL."
+            exit 1
+          fi
+          PAGE_URL="${PAGE_URL%/}/"
+          ready=false
+          for attempt in $(seq 1 18); do
+            if curl --fail --location --silent --show-error --max-time 20 "$PAGE_URL" --output "$RUNNER_TEMP/pages-index.html" \
+              && curl --fail --location --silent --show-error --max-time 20 "${PAGE_URL}flutter_bootstrap.js" --output "$RUNNER_TEMP/flutter_bootstrap.js"; then
+              ready=true
+              break
+            fi
+            echo "Pages is not serving the new app yet (attempt $attempt/18)."
+            sleep 10
+          done
+          if [[ "$ready" != true ]]; then
+            echo "GitHub Pages did not serve index.html and flutter_bootstrap.js before timeout."
+            exit 1
+          fi
+          python3 - "$RUNNER_TEMP/pages-index.html" <<'PY'
+          import sys
+          from pathlib import Path
+
+          html = Path(sys.argv[1]).read_text(encoding="utf-8")
+          required = ('<base href="/universal-ssh/">', 'flutter_bootstrap.js')
+          missing = [item for item in required if item not in html]
+          if missing:
+              raise SystemExit(f"Published Pages HTML is missing expected entries: {missing}")
+          print("Published Pages HTML and Flutter bootstrap are reachable with the expected base path.")
+          PY
 
   build-android:
     needs: [changes, quality-gate]
