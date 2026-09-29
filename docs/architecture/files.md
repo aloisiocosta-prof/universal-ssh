@@ -2,7 +2,7 @@
 
 This inventory complements the semantic C4/UML architecture. It is intentionally physical: every tracked file under `lib/`, `test/`, and `uwp/` must appear exactly once in this document. The Architecture Gate derives the expected inventory from Git and rejects drift.
 
-**Tracked files: 50** — lib: 14, test: 12, uwp: 24.
+**Tracked files: 51** — lib: 14, test: 12, uwp: 25.
 
 ## Repository structure
 
@@ -11,7 +11,7 @@ flowchart TB
   R[universal-ssh]
   R --> L[lib — 14 files]
   R --> T[test — 12 files]
-  R --> U[uwp — 24 files]
+  R --> U[uwp — 25 files]
   L --> LC[core/ssh + core/transport + main]
   T --> TC[core tests + performance + widget]
   U --> UH[UniversalSshUwp host]
@@ -53,7 +53,7 @@ flowchart TB
 - `test/performance/core_performance_test.dart`
 - `test/widget_test.dart`
 
-### uwp/ (24)
+### uwp/ (25)
 
 - `uwp/UniversalSshUwp.ProtocolTests/Program.cs`
 - `uwp/UniversalSshUwp.ProtocolTests/UniversalSshUwp.ProtocolTests.csproj`
@@ -65,6 +65,7 @@ flowchart TB
 - `uwp/UniversalSshUwp/BridgeEvent.cs`
 - `uwp/UniversalSshUwp/BridgeEventEmitter.cs`
 - `uwp/UniversalSshUwp/BridgeHostController.cs`
+- `uwp/UniversalSshUwp/BridgeHostCommandGate.cs`
 - `uwp/UniversalSshUwp/BridgeSocket.cs`
 - `uwp/UniversalSshUwp/BridgeSocketCleanup.cs`
 - `uwp/UniversalSshUwp/BridgeSocketCommandHandler.cs`
