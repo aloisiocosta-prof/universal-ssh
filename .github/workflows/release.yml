@@ -8,6 +8,8 @@ on:
       - "web/**"
       - "pubspec.yaml"
       - "pubspec.lock"
+      - "test/release_contract_test.py"
+      - "scripts/**"
       - ".github/workflows/release.yml"
   push:
     tags:
@@ -24,6 +26,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Test release and Pages contracts
+        run: python3 -m unittest discover -s test -p 'release_contract_test.py' -v
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -40,7 +44,7 @@ jobs:
           from pathlib import Path
 
           source = Path("pubspec.yaml").read_text(encoding="utf-8")
-          match = re.search(r"(?m)^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+[0-9]+)?\s*$", source)
+          match = re.search(r"(?m)^version:\\s*([0-9]+\\.[0-9]+\\.[0-9]+)(?:\\+[0-9]+)?\\s*$", source)
           if not match:
               raise SystemExit("pubspec.yaml must define a SemVer version with optional build number")
           expected = f"v{match.group(1)}"
@@ -52,7 +56,7 @@ jobs:
           else:
               print(f"PR release preview will target {expected}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"release_tag={expected}\n")
+              output.write(f"release_tag={expected}\\n")
           PY
       - name: Generate Flutter web scaffold
         run: flutter create --platforms=web --project-name universal_ssh .
@@ -67,7 +71,7 @@ jobs:
           mkdir -p dist
           (cd build/web-release && zip -qr "$GITHUB_WORKSPACE/dist/universal-ssh-web-$RELEASE_TAG.zip" .)
           (cd dist && sha256sum "universal-ssh-web-$RELEASE_TAG.zip" > SHA256SUMS.txt)
-          printf 'version=%s\ncommit=%s\n' "$RELEASE_TAG" "$GITHUB_SHA" > dist/BUILD-INFO.txt
+          printf 'version=%s\\ncommit=%s\\n' "$RELEASE_TAG" "$GITHUB_SHA" > dist/BUILD-INFO.txt
       - uses: actions/upload-artifact@v4
         with:
           name: versioned-web-release
