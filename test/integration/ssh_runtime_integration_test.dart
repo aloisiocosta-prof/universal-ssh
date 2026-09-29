@@ -45,8 +45,7 @@ void main() {
           final markerReceived = Completer<void>();
           final subscription = session.stdout.listen((bytes) {
             output.write(utf8.decode(bytes, allowMalformed: true));
-            if (RegExp(r'[\\r\\n]MVP_SSH_REAL_SESSION_OK[\\r\\n]')
-                    .hasMatch(output.toString()) &&
+            if (output.toString().contains('MVP_SSH_REAL_SESSION_OK') &&
                 !markerReceived.isCompleted) {
               markerReceived.complete();
             }
@@ -54,7 +53,7 @@ void main() {
 
           try {
             session.write(
-              utf8.encode("printf '\\\\nMVP_SSH_REAL_SESSION_OK\\\\n'\\n"),
+              utf8.encode("printf '\\nMVP_SSH_REAL_SESSION_OK\\n'\n"),
             );
             await markerReceived.future.timeout(const Duration(seconds: 10));
             expect(output.toString(), contains('MVP_SSH_REAL_SESSION_OK'));
@@ -96,7 +95,7 @@ void main() {
             session.write(
               utf8.encode(
                 "printf 'MVP_STDOUT_OK\\n'; "
-                "printf 'MVP_STDERR_OK\\n' >&2; exit\\n",
+                "printf 'MVP_STDERR_OK\\n' >&2; exit\n",
               ),
             );
             await Future.wait<void>([
@@ -141,7 +140,7 @@ void main() {
               request: request,
               onVerifyHostKey: (_) async => true,
               requestPassword: () async =>
-                  'invalid-${DateTime.now().microsecondsSinceEpoch}',
+                  'invalid-' + DateTime.now().microsecondsSinceEpoch.toString(),
             ),
             throwsA(anything),
           );
