@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_ssh/main.dart';
 
@@ -17,7 +18,20 @@ void main() {
     );
     expect(connect.onPressed, isNull);
 
-    expect(find.text('Verifique a chave do host'), findsNothing);
+    await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
+    await tester.enterText(find.byKey(const Key('user-field')), 'demo');
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('connect-button'))).onPressed,
+      isNotNull,
+    );
+
+    await tester.enterText(find.byKey(const Key('port-field')), '65536');
+    await tester.pump();
+    expect(
+      tester.widget<FilledButton>(find.byKey(const Key('connect-button'))).onPressed,
+      isNull,
+    );
   });
 
   testWidgets('demonstrates host verification, access, terminal and disconnect',
@@ -54,8 +68,7 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
     await tester.enterText(find.byKey(const Key('user-field')), 'demo');
-    await tester.tap(find.byKey(const Key('connect-button')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('connect-button')));
 
     await tapVisible(tester, find.byKey(const Key('reject-host-key')));
     expect(find.text('Nova conexão'), findsOneWidget);
