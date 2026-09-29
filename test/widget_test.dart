@@ -1,6 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_ssh/main.dart';
 
+Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('validates endpoint data before continuing',
       (tester) async {
@@ -21,29 +27,24 @@ void main() {
     await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
     await tester.enterText(find.byKey(const Key('port-field')), '22');
     await tester.enterText(find.byKey(const Key('user-field')), 'demo');
-    await tester.tap(find.byKey(const Key('connect-button')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('connect-button')));
 
     expect(find.text('Verifique a chave do host'), findsOneWidget);
     expect(find.text('SHA256:DEMO-ONLY-NOT-A-REAL-HOST-KEY'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('trust-host-key')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('trust-host-key')));
     expect(find.text('Autenticação'), findsOneWidget);
     expect(find.textContaining('não digite senha nem chave privada'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('simulate-auth')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('simulate-auth')));
     expect(find.text('Terminal'), findsOneWidget);
     expect(find.textContaining('nenhum servidor foi acessado'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('command-field')), 'whoami');
-    await tester.tap(find.byKey(const Key('send-command')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('send-command')));
     expect(find.text('demo'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('disconnect-button')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('disconnect-button')));
     expect(find.text('Nova conexão'), findsOneWidget);
     expect(find.text('Sessão demonstrativa encerrada.'), findsOneWidget);
   });
@@ -56,8 +57,7 @@ void main() {
     await tester.tap(find.byKey(const Key('connect-button')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('reject-host-key')));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, find.byKey(const Key('reject-host-key')));
     expect(find.text('Nova conexão'), findsOneWidget);
     expect(find.text('Chave rejeitada. Nenhuma conexão foi iniciada.'),
         findsOneWidget);
