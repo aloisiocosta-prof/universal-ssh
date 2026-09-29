@@ -52,7 +52,7 @@ jobs:
           else:
               print(f"PR release preview will target {expected}")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"release_tag={expected}\\n")
+              output.write(f"release_tag={expected}\n")
           PY
       - name: Generate Flutter web scaffold
         run: flutter create --platforms=web --project-name universal_ssh .
