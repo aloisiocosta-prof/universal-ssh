@@ -113,7 +113,8 @@ void main() {
     expect(find.text('Conectado'), findsNothing);
   });
 
-  testWidgets('authentication rejection hides raw error details', (tester) async {
+  testWidgets('authentication rejection hides raw error details',
+      (tester) async {
     final connector = _FakeSshConnectable()..rejectAuthentication = true;
     await tester.pumpWidget(UniversalSshApp(connector: connector));
     await _fillConnectionForm(tester);
