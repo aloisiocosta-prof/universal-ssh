@@ -265,6 +265,17 @@ static class BridgeProtocolTests
         releaseActiveWrite.SetResult(true);
         await Task.WhenAll(activeWrite, closeDrain);
         if (!closeEntered) return 42;
+
+        var serializedSocket = new SerializedRecordingBridgeSocket();
+        var serializedHost = BridgeHostController.ForSocket(serializedSocket);
+        var serializedConnect = serializedHost.ReceiveAsync("""{"type":"connect","host":"ssh.example.test","port":22}""");
+        await serializedSocket.ConnectEntered.Task;
+        var serializedData = serializedHost.ReceiveAsync("""{"type":"data","payload":"U1NI"}""");
+        await Task.Yield();
+        if (serializedSocket.DataEntered) return 44;
+        serializedSocket.ReleaseConnect.SetResult(true);
+        await Task.WhenAll(serializedConnect, serializedData);
+        if (!serializedSocket.DataEntered || serializedSocket.Operations != "connect,data") return 45;
         try
         {
             await closeGate.RunAsync(() => Task.CompletedTask);
@@ -353,4 +364,30 @@ sealed class EventRecordingBridgeSocket : BridgeSocket
     {
         await _emit(BridgeEvent.Closed());
     }
+}
+
+sealed class SerializedRecordingBridgeSocket : BridgeSocket
+{
+    private readonly List<string> _operations = new();
+    public Func<BridgeEvent, Task>? EventSink { get; set; }
+    public TaskCompletionSource<bool> ConnectEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public TaskCompletionSource<bool> ReleaseConnect { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public bool DataEntered { get; private set; }
+    public string Operations => string.Join(",", _operations);
+
+    public async Task ConnectAsync(string host, int port)
+    {
+        _operations.Add("connect");
+        ConnectEntered.SetResult(true);
+        await ReleaseConnect.Task;
+    }
+
+    public Task WriteAsync(byte[] bytes)
+    {
+        DataEntered = true;
+        _operations.Add("data");
+        return Task.CompletedTask;
+    }
+
+    public Task CloseAsync() => Task.CompletedTask;
 }
