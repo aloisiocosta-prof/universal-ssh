@@ -211,7 +211,9 @@ class _HomePageState extends State<HomePage> {
 
   String _safeError(Object error) {
     final text = error.toString();
-    if (text.contains('password') || text.contains('credential')) {
+    final normalized = text.toLowerCase();
+    if (normalized.contains('password') ||
+        normalized.contains('credential')) {
       return 'A conexão SSH falhou. Verifique o destino e a autenticação.';
     }
     return text.replaceAll(RegExp(r'\s+'), ' ').trim();
