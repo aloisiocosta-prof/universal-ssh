@@ -101,6 +101,8 @@ void main() {
                 !stderrReceived.isCompleted) {
               stderrReceived.complete();
             }
+          }, onDone: () {
+            if (!stderrEof.isCompleted) stderrEof.complete();
           });
 
           try {
