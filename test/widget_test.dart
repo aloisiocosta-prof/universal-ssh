@@ -33,7 +33,8 @@ void main() {
     expect(connector.passwordRequests, 0);
 
     await tester.tap(find.byKey(const Key('accept-host-key')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Autenticação SSH'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('password-field')), 'secret');
@@ -76,7 +77,8 @@ void main() {
     await tester.tap(find.byKey(const Key('connect-button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('reject-host-key')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(connector.passwordRequests, 0);
     expect(find.text('Erro'), findsOneWidget);
