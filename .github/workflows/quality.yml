@@ -37,8 +37,6 @@ jobs:
         run: flutter create --platforms=android,web --project-name universal_ssh .
       - name: Resolve dependencies
         run: flutter pub get
-      - name: Show formatter output for PWA prototype files
-        run: dart format --output=show lib/main.dart test/widget_test.dart
       - name: Formatting gate
         run: dart format --output=none --set-exit-if-changed lib test
       - name: Static analysis
