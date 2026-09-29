@@ -50,8 +50,6 @@ void main() {
                 !markerReceived.isCompleted) {
               markerReceived.complete();
             }
-          }, onDone: () {
-            if (!stderrEof.isCompleted) stderrEof.complete();
           });
 
           try {
