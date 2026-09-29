@@ -65,6 +65,7 @@ jobs:
               - 'uwp/**'
             ci:
               - '.github/workflows/build.yml'
+              - '.github/workflows/release.yml'
               - '.github/workflows/quality.yml'
               - 'docs/architecture/**'
               - 'README.md'
