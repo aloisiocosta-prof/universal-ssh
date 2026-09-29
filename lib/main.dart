@@ -10,7 +10,12 @@ import 'core/ssh/ssh_runtime.dart';
 void main() => runApp(const UniversalSshApp());
 
 class UniversalSshApp extends StatelessWidget {
-  const UniversalSshApp({super.key});
+  const UniversalSshApp({
+    super.key,
+    this.connector = const SshConnectionService(),
+  });
+
+  final SshConnectable connector;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -25,14 +30,16 @@ class UniversalSshApp extends StatelessWidget {
           scaffoldBackgroundColor: const Color(0xFF07111F),
           useMaterial3: true,
         ),
-        home: const HomePage(),
+        home: HomePage(connector: connector),
       );
 }
 
 enum _ClientState { disconnected, connecting, connected, error }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.connector});
+
+  final SshConnectable connector;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -46,7 +53,6 @@ class _HomePageState extends State<HomePage> {
   final _gatewayToken = TextEditingController();
   final _command = TextEditingController();
   final _outputScroll = ScrollController();
-  final _service = const SshConnectionService();
   final _output = StringBuffer();
   StreamSubscription<List<int>>? _stdoutSubscription;
   StreamSubscription<List<int>>? _stderrSubscription;
@@ -93,7 +99,7 @@ class _HomePageState extends State<HomePage> {
     });
 
     try {
-      final session = await _service.connect(
+      final session = await widget.connector.connect(
         request: SshConnectionRequest(
           host: _host.text.trim(),
           port: port,

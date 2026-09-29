@@ -10,25 +10,24 @@ import '../transport/ssh_socket_factory.dart';
 typedef HostKeyDecision = Future<bool> Function(SshHostIdentity identity);
 typedef PasswordRequest = Future<String?> Function();
 
-final class SshTerminalSession {
-  SshTerminalSession._(this._client, this._session);
+abstract interface class SshTerminalSession {
+  Stream<Uint8List> get stdout;
+  Stream<Uint8List> get stderr;
+  Future<void> get done;
 
-  final SSHClient _client;
-  final SSHSession _session;
+  void write(List<int> bytes);
+  void resize(int columns, int rows);
+  Future<void> close();
+}
 
-  Stream<Uint8List> get stdout => _session.stdout;
-  Stream<Uint8List> get stderr => _session.stderr;
-  Future<void> get done => _session.done;
-
-  void write(List<int> bytes) => _session.write(Uint8List.fromList(bytes));
-
-  void resize(int columns, int rows) => _session.resizeTerminal(columns, rows);
-
-  Future<void> close() async {
-    _session.close();
-    _client.close();
-    await done;
-  }
+abstract interface class SshConnectable {
+  Future<SshTerminalSession> connect({
+    required SshConnectionRequest request,
+    required HostKeyDecision onVerifyHostKey,
+    required PasswordRequest requestPassword,
+    String? gatewayUrl,
+    String? gatewayToken,
+  });
 }
 
 /// Opens a real SSH transport, verifies the server key before requesting a
@@ -36,9 +35,10 @@ final class SshTerminalSession {
 ///
 /// No credential or host-key decision is persisted by this service. The
 /// caller must present every fingerprint to the user and obtain consent.
-final class SshConnectionService {
+final class SshConnectionService implements SshConnectable {
   const SshConnectionService();
 
+  @override
   Future<SshTerminalSession> connect({
     required SshConnectionRequest request,
     required HostKeyDecision onVerifyHostKey,
@@ -86,10 +86,39 @@ final class SshConnectionService {
       final shell = await client.shell(
         pty: const SSHPtyConfig(type: 'xterm-256color', width: 80, height: 24),
       );
-      return SshTerminalSession._(client, shell);
+      return _SshTerminalSession(client, shell);
     } catch (_) {
       client.close();
       rethrow;
     }
+  }
+}
+
+final class _SshTerminalSession implements SshTerminalSession {
+  _SshTerminalSession(this._client, this._session);
+
+  final SSHClient _client;
+  final SSHSession _session;
+
+  @override
+  Stream<Uint8List> get stdout => _session.stdout;
+
+  @override
+  Stream<Uint8List> get stderr => _session.stderr;
+
+  @override
+  Future<void> get done => _session.done;
+
+  @override
+  void write(List<int> bytes) => _session.write(Uint8List.fromList(bytes));
+
+  @override
+  void resize(int columns, int rows) => _session.resizeTerminal(columns, rows);
+
+  @override
+  Future<void> close() async {
+    _session.close();
+    _client.close();
+    await done;
   }
 }
