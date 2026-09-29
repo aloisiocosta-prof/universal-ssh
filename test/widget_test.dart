@@ -64,8 +64,12 @@ void main() {
     await tester.pump();
     expect(connector.session.written, 'whoami\r'.codeUnits);
 
-    await tester.tap(find.byKey(const Key('disconnect-button')));
-    await tester.pumpAndSettle();
+    final disconnectButton = find.byKey(const Key('disconnect-button'));
+    await tester.ensureVisible(disconnectButton);
+    await tester.tap(disconnectButton);
+    await tester.pump();
+    await tester.idle();
+    await tester.pump();
     expect(connector.session.closed, isTrue);
     expect(find.text('Desconectado'), findsOneWidget);
   });
