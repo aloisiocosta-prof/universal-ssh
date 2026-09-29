@@ -3,6 +3,8 @@
 ## 1. Class
 ```mermaid
 classDiagram
+  BridgeHostController *-- BridgeHostCommandGate
+  BridgeHostCommandGate ..> BridgeSocket
   BridgeSocket <|.. WinRtBridgeSocket
   WinRtBridgeSocket *-- BridgeSocketLifecycle
   WinRtBridgeSocket *-- BridgeSocketWriteGate
@@ -13,7 +15,9 @@ classDiagram
 ## 2. Object
 ```mermaid
 flowchart LR
-  socket["socket: WinRtBridgeSocket"] --> lifecycle["lifecycle: BridgeSocketLifecycle"]
+  host["host: BridgeHostController"] --> commandGate["commandGate: BridgeHostCommandGate"]
+  commandGate --> socket["socket: WinRtBridgeSocket"]
+  socket --> lifecycle["lifecycle: BridgeSocketLifecycle"]
   socket --> writeGate["writeGate: BridgeSocketWriteGate"]
   socket --> stream["socket: StreamSocket"]
   socket --> reader["reader: DataReader"]
@@ -25,7 +29,8 @@ flowchart LR
 flowchart LR
   Flutter[Flutter Web runtime] --> Bridge[WebView Bridge]
   Bridge --> Controller[UWP Host Controller]
-  Controller --> Socket[Native Socket Component]
+  Controller --> Gate[Host Command Gate]
+  Gate --> Socket[Native Socket Component]
   Socket --> WinRT[Windows.Networking.Sockets]
 ```
 
@@ -110,11 +115,13 @@ stateDiagram-v2
 sequenceDiagram
   participant W as WebView
   participant H as HostController
+  participant G as HostCommandGate
   participant S as WinRtBridgeSocket
   participant L as Lifecycle
   participant T as StreamSocket
   W->>H: connect(host, port)
-  H->>S: ConnectAsync
+  H->>G: RunAsync(connect)
+  G->>S: ConnectAsync
   S->>L: TryBeginConnect()
   S->>T: ConnectAsync
   alt success
@@ -130,16 +137,18 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   W["1 WebView"] -->|"2 command"| H["HostController"]
-  H -->|"3 ConnectAsync"| S["WinRtBridgeSocket"]
-  S -->|"4 transition"| L["Lifecycle"]
-  S -->|"5 TCP"| T["StreamSocket"]
-  S -->|"6 BridgeEvent"| W
+  H -->|"3 enqueue"| G["HostCommandGate"]
+  G -->|"4 ConnectAsync"| S["WinRtBridgeSocket"]
+  S -->|"5 transition"| L["Lifecycle"]
+  S -->|"6 TCP"| T["StreamSocket"]
+  S -->|"7 BridgeEvent"| W
 ```
 
 ## 13. Interaction Overview
 ```mermaid
 flowchart TD
-  C[Connect interaction] --> Q{Connected?}
+  C[Connect interaction] --> G[Serialized host command]
+  G --> Q{Connected?}
   Q -- yes --> IO[Read/write interaction]
   Q -- no --> R[Rollback interaction]
   IO --> D[Disconnect interaction]
