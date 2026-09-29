@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_ssh/main.dart';
 
 Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.pump();
   await tester.ensureVisible(finder);
   await tester.tap(finder);
   await tester.pumpAndSettle();
