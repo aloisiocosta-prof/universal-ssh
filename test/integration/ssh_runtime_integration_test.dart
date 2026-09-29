@@ -98,11 +98,24 @@ void main() {
                 "printf 'MVP_STDERR_OK\\n' >&2; exit\n",
               ),
             );
-            await Future.wait<void>([
-              stdoutReceived.future.timeout(const Duration(seconds: 10)),
-              stderrReceived.future.timeout(const Duration(seconds: 10)),
-              session.done.timeout(const Duration(seconds: 10)),
-            ]);
+            await stdoutReceived.future.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () => throw TimeoutException(
+                'The remote command did not reach stdout.',
+              ),
+            );
+            await stderrReceived.future.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () => throw TimeoutException(
+                'The remote command did not reach stderr.',
+              ),
+            );
+            await session.done.timeout(
+              const Duration(seconds: 10),
+              onTimeout: () => throw TimeoutException(
+                'The remote shell exit did not complete the session.',
+              ),
+            );
             expect(stdout.toString(), contains('MVP_STDOUT_OK'));
             expect(stderr.toString(), contains('MVP_STDERR_OK'));
           } finally {
@@ -140,7 +153,7 @@ void main() {
               request: request,
               onVerifyHostKey: (_) async => true,
               requestPassword: () async =>
-                  'invalid-' + DateTime.now().microsecondsSinceEpoch.toString(),
+                  'invalid-${DateTime.now().microsecondsSinceEpoch},
             ),
             throwsA(anything),
           );
