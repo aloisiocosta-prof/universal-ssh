@@ -97,8 +97,8 @@ jobs:
 
           readme = Path('README.md').read_text(encoding='utf-8')
           canonical = Path('docs/architecture/c4.md').read_text(encoding='utf-8')
-          readme_blocks = re.findall(r'```mermaid\\n(.*?)```', readme, re.S)
-          canonical_blocks = re.findall(r'```mermaid\\n(.*?)```', canonical, re.S)
+          readme_blocks = re.findall(r'```mermaid\n(.*?)```', readme, re.S)
+          canonical_blocks = re.findall(r'```mermaid\n(.*?)```', canonical, re.S)
           if len(readme_blocks) != 4:
               raise SystemExit(f'Expected 4 Mermaid C4 diagrams in README.md, found {len(readme_blocks)}')
           if readme_blocks != canonical_blocks:
