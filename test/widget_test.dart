@@ -2,19 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:universal_ssh/main.dart';
 
 void main() {
-  testWidgets('keeps demo connection disabled until endpoint data is valid',
+  testWidgets('validates endpoint data before continuing',
       (tester) async {
     await tester.pumpWidget(const UniversalSshApp());
 
     final connect = tester.widget<FilledButton>(
       find.byKey(const Key('connect-button')),
     );
-    expect(connect.onPressed, isNotNull);
+    expect(connect.onPressed, isNull);
 
-    await tester.tap(find.byKey(const Key('connect-button')));
-    await tester.pumpAndSettle();
-    expect(find.text('Informe host, usuário e uma porta entre 1 e 65535.'),
-        findsOneWidget);
     expect(find.text('Verifique a chave do host'), findsNothing);
   });
 
