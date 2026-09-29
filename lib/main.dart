@@ -475,7 +475,6 @@ class _HomePageState extends State<HomePage> {
       );
 }
 
-
 class _PasswordDialog extends StatefulWidget {
   const _PasswordDialog();
 
