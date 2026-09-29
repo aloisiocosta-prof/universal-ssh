@@ -92,7 +92,7 @@ void main() {
               request: request,
               onVerifyHostKey: (_) async => true,
               requestPassword: () async =>
-                  'invalid-' + DateTime.now().microsecondsSinceEpoch.toString(),
+                  'invalid-${DateTime.now().microsecondsSinceEpoch}',
             ),
             throwsA(anything),
           );
