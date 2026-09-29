@@ -76,9 +76,8 @@ class _HomePageState extends State<HomePage> {
   void _trustDemoHostKey(bool trust) {
     setState(() {
       _step = trust ? DemoStep.authenticate : DemoStep.connect;
-      _validationMessage = trust
-          ? null
-          : 'Chave rejeitada. Nenhuma conexão foi iniciada.';
+      _validationMessage =
+          trust ? null : 'Chave rejeitada. Nenhuma conexão foi iniciada.';
     });
   }
 
@@ -88,7 +87,8 @@ class _HomePageState extends State<HomePage> {
       _terminalLines
         ..clear()
         ..add('Autenticação demonstrativa concluída.')
-        ..add('Sessão fictícia para validar a interface; nenhum servidor foi acessado.');
+        ..add(
+            'Sessão fictícia para validar a interface; nenhum servidor foi acessado.');
     });
   }
 
@@ -121,7 +121,8 @@ class _HomePageState extends State<HomePage> {
       _terminalLines
         ..clear()
         ..add('Protótipo visual. Nenhuma conexão SSH foi aberta.')
-        ..add('Digite pwd, whoami, ls ou clear para explorar o terminal fictício.');
+        ..add(
+            'Digite pwd, whoami, ls ou clear para explorar o terminal fictício.');
     });
   }
 
@@ -132,7 +133,11 @@ class _HomePageState extends State<HomePage> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: <Color>[Color(0xFF0B1B2D), Color(0xFF07111F), Color(0xFF10172B)],
+              colors: <Color>[
+                Color(0xFF0B1B2D),
+                Color(0xFF07111F),
+                Color(0xFF10172B)
+              ],
             ),
           ),
           child: SafeArea(
@@ -157,7 +162,11 @@ class _HomePageState extends State<HomePage> {
                       }
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[intro, const SizedBox(height: 28), panel],
+                        children: <Widget>[
+                          intro,
+                          const SizedBox(height: 28),
+                          panel
+                        ],
                       );
                     },
                   ),
@@ -173,9 +182,11 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Icon(Icons.terminal_rounded, color: Color(0xFF63E6BE), size: 34),
+              const Icon(Icons.terminal_rounded,
+                  color: Color(0xFF63E6BE), size: 34),
               const SizedBox(width: 12),
-              Text('UNIVERSAL SSH', style: Theme.of(context).textTheme.titleMedium),
+              Text('UNIVERSAL SSH',
+                  style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(width: 14),
               const Chip(
                 avatar: Icon(Icons.science_outlined, size: 16),
@@ -200,9 +211,15 @@ class _HomePageState extends State<HomePage> {
                 ),
           ),
           const SizedBox(height: 24),
-          const _FeatureLine(icon: Icons.verified_user_outlined, text: 'Confirmação explícita da chave do host'),
-          const _FeatureLine(icon: Icons.devices_outlined, text: 'Fluxo pensado para Web, Windows e Xbox'),
-          const _FeatureLine(icon: Icons.lock_outline, text: 'Sem armazenar credenciais neste protótipo'),
+          const _FeatureLine(
+              icon: Icons.verified_user_outlined,
+              text: 'Confirmação explícita da chave do host'),
+          const _FeatureLine(
+              icon: Icons.devices_outlined,
+              text: 'Fluxo pensado para Web, Windows e Xbox'),
+          const _FeatureLine(
+              icon: Icons.lock_outline,
+              text: 'Sem armazenar credenciais neste protótipo'),
           const SizedBox(height: 24),
           const Text(
             'Próxima etapa real: conectar os adapters de transporte e validar a sessão SSH.',
@@ -249,7 +266,9 @@ class _HomePageState extends State<HomePage> {
                   duration: const Duration(milliseconds: 180),
                   height: 4,
                   decoration: BoxDecoration(
-                    color: active ? const Color(0xFF63E6BE) : const Color(0xFF34465A),
+                    color: active
+                        ? const Color(0xFF63E6BE)
+                        : const Color(0xFF34465A),
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -258,7 +277,9 @@ class _HomePageState extends State<HomePage> {
                   labels[index],
                   style: TextStyle(
                     fontSize: 11,
-                    color: active ? const Color(0xFFEAF7F4) : const Color(0xFF8495A8),
+                    color: active
+                        ? const Color(0xFFEAF7F4)
+                        : const Color(0xFF8495A8),
                   ),
                 ),
               ],
@@ -279,11 +300,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildConnectionForm() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text('Nova conexão', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Nova conexão',
+              style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          const Text('Informe os dados do endpoint para avançar pela demonstração.'),
+          const Text(
+              'Informe os dados do endpoint para avançar pela demonstração.'),
           const SizedBox(height: 20),
-          _field('Host ou endereço IP', _hostController, key: const Key('host-field')),
+          _field('Host ou endereço IP', _hostController,
+              key: const Key('host-field')),
           const SizedBox(height: 12),
           Row(
             children: <Widget>[
@@ -296,7 +320,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(child: _field('Usuário', _userController, key: const Key('user-field'))),
+              Expanded(
+                  child: _field('Usuário', _userController,
+                      key: const Key('user-field'))),
             ],
           ),
           if (_validationMessage != null) ...<Widget>[
@@ -320,11 +346,14 @@ class _HomePageState extends State<HomePage> {
   Widget _buildHostKeyConfirmation() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text('Verifique a chave do host', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Verifique a chave do host',
+              style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          const Text('Em um cliente real, confirme esta impressão digital por um canal confiável.'),
+          const Text(
+              'Em um cliente real, confirme esta impressão digital por um canal confiável.'),
           const SizedBox(height: 18),
-          _detailRow('Destino', _hostController.text.trim() + ':' + _portController.text.trim()),
+          _detailRow('Destino',
+              _hostController.text.trim() + ':' + _portController.text.trim()),
           const SizedBox(height: 12),
           const _Fingerprint(),
           const SizedBox(height: 18),
@@ -345,7 +374,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildAuthenticationStep() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text('Autenticação', style: Theme.of(context).textTheme.headlineSmall),
+          Text('Autenticação',
+              style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
           Text('Usuário: ' + _userController.text.trim()),
           const SizedBox(height: 14),
@@ -368,7 +398,9 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           Row(
             children: <Widget>[
-              Expanded(child: Text('Terminal', style: Theme.of(context).textTheme.headlineSmall)),
+              Expanded(
+                  child: Text('Terminal',
+                      style: Theme.of(context).textTheme.headlineSmall)),
               IconButton(
                 key: const Key('disconnect-button'),
                 tooltip: 'Desconectar',
@@ -396,7 +428,8 @@ class _HomePageState extends State<HomePage> {
               children: _terminalLines
                   .map((line) => Padding(
                         padding: const EdgeInsets.only(bottom: 5),
-                        child: Text(line, style: const TextStyle(fontFamily: 'monospace')),
+                        child: Text(line,
+                            style: const TextStyle(fontFamily: 'monospace')),
                       ))
                   .toList(),
             ),
@@ -497,7 +530,8 @@ class _Fingerprint extends StatelessWidget {
             SizedBox(height: 6),
             SelectableText(
               'SHA256:DEMO-ONLY-NOT-A-REAL-HOST-KEY',
-              style: TextStyle(fontFamily: 'monospace', color: Color(0xFF63E6BE)),
+              style:
+                  TextStyle(fontFamily: 'monospace', color: Color(0xFF63E6BE)),
             ),
           ],
         ),
