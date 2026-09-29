@@ -96,7 +96,8 @@ flowchart LR
 ```mermaid
 flowchart LR
   JS[WebView command] --> HC[BridgeHostController]
-  HC --> BS[WinRtBridgeSocket]
+  HC --> CG[BridgeHostCommandGate]
+  CG --> BS[WinRtBridgeSocket]
   BS --> LC[BridgeSocketLifecycle]
   BS --> WG[BridgeSocketWriteGate]
   BS --> RL[BridgeSocketReadLoop]
@@ -115,6 +116,10 @@ classDiagram
     +WriteAsync(bytes)
     +CloseAsync()
   }
+  class BridgeHostController
+  class BridgeHostCommandGate {
+    +RunAsync(operation)
+  }
   class WinRtBridgeSocket
   class BridgeSocketLifecycle {
     +TryBeginConnect() bool
@@ -130,6 +135,8 @@ classDiagram
   }
   class BridgeSocketReadLoop
   class BridgeSocketCleanup
+  BridgeHostController *-- BridgeHostCommandGate
+  BridgeHostCommandGate ..> BridgeSocket
   BridgeSocket <|.. WinRtBridgeSocket
   WinRtBridgeSocket *-- BridgeSocketLifecycle
   WinRtBridgeSocket *-- BridgeSocketWriteGate

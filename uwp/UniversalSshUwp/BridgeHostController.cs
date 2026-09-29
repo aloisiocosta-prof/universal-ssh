@@ -7,6 +7,7 @@ public sealed class BridgeHostController
 {
     private readonly BridgeCommandDispatcher _dispatcher;
     private readonly Func<BridgeCommand, Task>? _asyncConsumer;
+    private readonly BridgeHostCommandGate _commandGate = new();
 
     public BridgeHostController(BridgeCommandDispatcher dispatcher)
     {
@@ -41,6 +42,7 @@ public sealed class BridgeHostController
             throw new InvalidOperationException("This controller has no asynchronous consumer.");
         }
 
-        return _asyncConsumer(BridgeCommand.Parse(value));
+        var command = BridgeCommand.Parse(value);
+        return _commandGate.RunAsync(() => _asyncConsumer(command));
     }
 }
