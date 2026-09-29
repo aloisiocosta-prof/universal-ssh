@@ -14,3 +14,7 @@ The catalog contains the four C4 abstraction levels and the fourteen UML 2.x dia
 - UML interaction: Sequence, Communication, Interaction Overview, Timing.
 
 Current architectural slice: UWP WebView bridge and native socket lifecycle.
+
+## Physical file traceability
+
+The machine-checked [repository file inventory](files.md) complements the semantic diagrams. Every tracked file under `lib/`, `test/`, and `uwp/` must be represented there; architecture CI rejects inventory drift.
