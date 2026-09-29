@@ -58,7 +58,7 @@ void main() {
         findsOneWidget);
 
     await tapVisible(tester, find.byKey(const Key('simulate-auth')));
-    expect(find.text('Terminal'), findsOneWidget);
+    expect(find.byKey(const Key('terminal-output')), findsOneWidget);
     expect(find.textContaining('nenhum servidor foi acessado'), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('command-field')), 'whoami');
