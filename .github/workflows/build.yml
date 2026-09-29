@@ -93,10 +93,13 @@ jobs:
           print(f'Validated catalog size: {count} diagrams')
           PY
           mkdir -p /tmp/mermaid-rendered
+          cat > /tmp/puppeteer.json <<'JSON'
+          {"args":["--no-sandbox","--disable-setuid-sandbox"]}
+          JSON
           for diagram in /tmp/mermaid/*.mmd; do
             name="$(basename "$diagram" .mmd)"
             echo "Rendering $name"
-            npm exec --yes --package=@mermaid-js/mermaid-cli -- mmdc -i "$diagram" -o "/tmp/mermaid-rendered/$name.svg"
+            npm exec --yes --package=@mermaid-js/mermaid-cli -- mmdc -p /tmp/puppeteer.json -i "$diagram" -o "/tmp/mermaid-rendered/$name.svg"
           done
 
   quality-gate:
