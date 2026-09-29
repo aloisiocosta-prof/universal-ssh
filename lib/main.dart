@@ -104,10 +104,10 @@ class _HomePageState extends State<HomePage> {
           'whoami' => 'demo',
           'pwd' => '/home/demo',
           'ls' => 'documentos/  projetos/  README.txt',
-          _ => 'Comando apenas exibido no protótipo: ' + command,
+          _ => 'Comando apenas exibido no protótipo: $command',
         };
         _terminalLines
-          ..add(r'$ ' + command)
+          ..add('\$ $command')
           ..add(output);
       }
       _commandController.clear();
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
               'Em um cliente real, confirme esta impressão digital por um canal confiável.'),
           const SizedBox(height: 18),
           _detailRow('Destino',
-              _hostController.text.trim() + ':' + _portController.text.trim()),
+              '${_hostController.text.trim()}:${_portController.text.trim()}'),
           const SizedBox(height: 12),
           const _Fingerprint(),
           const SizedBox(height: 18),
@@ -377,7 +377,7 @@ class _HomePageState extends State<HomePage> {
           Text('Autenticação',
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          Text('Usuário: ' + _userController.text.trim()),
+          Text('Usuário: ${_userController.text.trim()}'),
           const SizedBox(height: 14),
           const Text(
             'A autenticação real ainda não está ligada. Para manter a demo segura, não digite senha nem chave privada.',
@@ -410,7 +410,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           Text(
-            _hostController.text.trim() + ' • sessão demonstrativa',
+            '${_hostController.text.trim()} • sessão demonstrativa',
             style: const TextStyle(color: Color(0xFF91A4BA)),
           ),
           const SizedBox(height: 14),
@@ -480,7 +480,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _detailRow(String label, String value) => Row(
         children: <Widget>[
-          Text(label + ': ', style: const TextStyle(color: Color(0xFF91A4BA))),
+          Text('$label: ', style: const TextStyle(color: Color(0xFF91A4BA))),
           Expanded(child: Text(value)),
         ],
       );
