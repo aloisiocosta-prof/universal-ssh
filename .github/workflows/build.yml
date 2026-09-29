@@ -113,11 +113,11 @@ jobs:
               if path.is_file()
           )
           documented = sorted(
-              line[3:-1]
+              value
               for line in inventory.splitlines()
-              if line.startswith('- \`')
-              and line.endswith('\`')
-              and line[3:-1].startswith(('lib/', 'test/', 'uwp/'))
+              if line.startswith('- ')
+              for value in (line[2:].strip().strip(chr(96)),)
+              if value.startswith(('lib/', 'test/', 'uwp/'))
           )
           if documented != tracked:
               missing = sorted(set(tracked) - set(documented))
