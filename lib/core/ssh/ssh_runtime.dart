@@ -83,9 +83,15 @@ final class SshConnectionService implements SshConnectable {
 
     try {
       await client.authenticated;
-      final shell = await client.shell(
-        pty: const SSHPtyConfig(type: 'xterm-256color', width: 80, height: 24),
-      );
+      final shell = request.allocatePty
+          ? await client.shell(
+              pty: const SSHPtyConfig(
+                type: 'xterm-256color',
+                width: 80,
+                height: 24,
+              ),
+            )
+          : await client.shell();
       return _SshTerminalSession(client, shell);
     } catch (_) {
       client.close();
