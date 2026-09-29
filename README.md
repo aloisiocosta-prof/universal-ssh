@@ -2,7 +2,7 @@
 
 **Universal SSH** é um projeto open source de cliente SSH multiplataforma construído com **Flutter e Dart**, projetado para compartilhar o máximo possível de código entre **Web/PWA, Android, Windows x64 e Xbox One**.
 
-> **Estado atual:** fundação arquitetural e pipeline de build. A implementação SSH real ainda não faz parte deste primeiro marco.
+> **Estado atual:** núcleo de transporte SSH e bridge UWP em desenvolvimento incremental, com TDD, CI/CD multiplataforma e documentação arquitetural executável.
 
 ## Objetivo
 
@@ -64,37 +64,82 @@ A regra arquitetural é manter em Dart puro tudo que não depende diretamente da
 
 Flutter não possui um target UWP/Xbox neste projeto. Windows x64/Xbox utilizam um **host UWP customizado**. Esse target não é equivalente a `flutter build windows`: o host C#/WinRT incorpora o artifact produzido por `flutter build web` e o apresenta em um WebView.
 
-## Arquitetura UWP / Xbox
+## Arquitetura — C4
 
-```text
-Flutter / Dart
-     |
-Flutter Web
-     |
-UWP WebView
-     |
-     +-- bridge Dart/JavaScript <-> C#/WinRT
-     |
-     +-- capabilities nativas
-          +-- rede
-          +-- gamepad
-          +-- teclado
-          +-- armazenamento seguro
-          +-- arquivos
+Os quatro níveis C4 abaixo são renderizados diretamente pelo GitHub e representam a arquitetura versionada do projeto. O catálogo detalhado é mantido em [docs/architecture](docs/architecture/README.md), incluindo os **4 níveis C4** e os **14 tipos de diagramas UML 2.x** representados com a notação Mermaid mais próxima disponível.
+
+### C4 — Level 1: System Context
+
+```mermaid
+flowchart LR
+  User[SSH user] --> USS[Universal SSH]
+  USS --> Host[SSH server]
+  USS --> GH[GitHub Actions]
 ```
 
-O primeiro marco UWP é deliberadamente pequeno:
+### C4 — Level 2: Containers
 
-```text
-main.dart
- -> flutter build web
- -> artifact flutter-web
- -> UWP WebView
- -> package x64
- -> Windows / Xbox
+```mermaid
+flowchart LR
+  UI[Flutter UI] --> Core[Shared SSH Core]
+  Core --> T[SshTransport]
+  T --> IO[DartIoSshTransport]
+  T --> BT[BridgeSshTransport]
+  BT --> WV[UWP WebView bridge]
+  WV --> Host[UWP native host]
+  Host --> TCP[WinRT StreamSocket]
+  TCP --> SSH[SSH server]
 ```
 
-SSH, armazenamento seguro e demais integrações serão adicionados incrementalmente depois que essa cadeia estiver validada.
+### C4 — Level 3: Components — UWP transport
+
+```mermaid
+flowchart LR
+  JS[WebView command] --> HC[BridgeHostController]
+  HC --> BS[WinRtBridgeSocket]
+  BS --> LC[BridgeSocketLifecycle]
+  BS --> WG[BridgeSocketWriteGate]
+  BS --> RL[BridgeSocketReadLoop]
+  BS --> CL[BridgeSocketCleanup]
+  RL --> EM[BridgeEventEmitter]
+  BS --> SS[StreamSocket]
+```
+
+### C4 — Level 4: Code
+
+```mermaid
+classDiagram
+  class BridgeSocket {
+    +EventSink
+    +ConnectAsync(host, port)
+    +WriteAsync(bytes)
+    +CloseAsync()
+  }
+  class WinRtBridgeSocket
+  class BridgeSocketLifecycle {
+    +TryBeginConnect() bool
+    +MarkConnectFailed()
+    +MarkConnected()
+    +TryBeginClose() bool
+    +MarkClosed()
+  }
+  class BridgeSocketWriteGate {
+    +RunAsync(operation)
+    +DrainAsync(operation)
+    +Reset()
+  }
+  class BridgeSocketReadLoop
+  class BridgeSocketCleanup
+  BridgeSocket <|.. WinRtBridgeSocket
+  WinRtBridgeSocket *-- BridgeSocketLifecycle
+  WinRtBridgeSocket *-- BridgeSocketWriteGate
+  WinRtBridgeSocket ..> BridgeSocketReadLoop
+  WinRtBridgeSocket ..> BridgeSocketCleanup
+```
+
+### UML 2.x e documentação completa
+
+Os **14 tipos UML** estão em [docs/architecture/uml.md](docs/architecture/uml.md), enquanto a definição canônica dos quatro níveis acima está em [docs/architecture/c4.md](docs/architecture/c4.md). O Architecture Gate do GitHub Actions exige o catálogo de 18 diagramas e renderiza cada bloco Mermaid antes que uma alteração arquitetural seja considerada válida.
 
 ## Capability-oriented design
 
