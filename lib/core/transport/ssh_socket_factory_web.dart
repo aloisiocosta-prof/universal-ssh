@@ -26,7 +26,7 @@ Future<SSHSocket> createPlatformSshSocket({
     );
   }
 
-  final socket = web.WebSocket(url)..binaryType = 'arraybuffer';
+  final socket = web.WebSocket(url.toJS)..binaryType = 'arraybuffer';
   final transport = _WebSocketSshSocket(socket);
   await transport.opened;
   socket.send(jsonEncode({

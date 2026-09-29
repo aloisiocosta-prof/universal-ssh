@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import '../lib/gateway/ssh_gateway_policy.dart';
+import 'package:universal_ssh/gateway/ssh_gateway_policy.dart';
 
 Future<void> main() async {
   final policy = SshGatewayPolicy.fromEnvironment(Platform.environment);
@@ -23,7 +23,7 @@ Future<void> main() async {
       await request.response.close();
       continue;
     }
-    if (!policy.allowsOrigin(request.headers.value(HttpHeaders.originHeader))) {
+    if (!policy.allowsOrigin(request.headers.value('origin'))) {
       request.response.statusCode = HttpStatus.forbidden;
       await request.response.close();
       continue;
@@ -53,7 +53,7 @@ Future<void> _serve(HttpRequest request, SshGatewayPolicy policy) async {
         if (!firstFrame.isCompleted) {
           firstFrame.complete(frame);
         } else if (frame is List<int> && sshSocket != null) {
-          sshSocket!.add(frame);
+          sshSocket.add(frame);
         }
       },
       onError: (_) {
