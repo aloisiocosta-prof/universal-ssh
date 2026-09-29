@@ -17,6 +17,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+
+  osv-scan:
+    name: Open source vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan supported manifests and lockfiles
+        uses: google/osv-scanner-action@v2.5.1
+        with:
+          scan-args: |-
+            -r
+            .
+
   security-audit:
     name: Dependency and secret audit
     runs-on: ubuntu-latest
@@ -34,14 +60,3 @@ jobs:
         shell: bash
         run: |
           ! grep -RInE --exclude-dir=.git --exclude='*.lock' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,})' .
-
-  dependency-review-prerequisite:
-    name: Dependency Review prerequisite
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Record unavailable native dependency review
-        run: |
-          echo "::notice::GitHub Dependency Review requires Dependency Graph."
-          echo "::notice::It is currently unavailable for this repository; enable Dependency Graph in repository Security Analysis settings before promoting it to a required gate."
-          echo "Executable dependency and secret controls are enforced by the Security audit job."
