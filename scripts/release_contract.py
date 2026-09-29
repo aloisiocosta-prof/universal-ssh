@@ -8,7 +8,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 _VERSION = re.compile(
-    r"(?m)^version:\\s*(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:\\+[0-9]+)?\\s*$"
+    r"(?m)^version:\s*(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\+[0-9]+)?\s*$"
 )
 
 
@@ -76,10 +76,14 @@ def main() -> int:
             if args.event_name == "push"
             else expected_release_tag(pubspec_text)
         )
-        print(f"Validated release tag {tag}" if args.event_name == "push" else f"PR preview target: {tag}")
+        print(
+            f"Validated release tag {tag}"
+            if args.event_name == "push"
+            else f"PR preview target: {tag}"
+        )
         if args.output:
             with args.output.open("a", encoding="utf-8") as output:
-                output.write(f"release_tag={tag}\\n")
+                output.write(f"release_tag={tag}\n")
 
     if args.pages_html:
         validate_pages_html(args.pages_html.read_text(encoding="utf-8"), args.base_path)
