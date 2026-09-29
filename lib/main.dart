@@ -225,18 +225,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _disconnect() async {
-    await _stdoutSubscription?.cancel();
-    await _stderrSubscription?.cancel();
+    final session = _session;
+    final stdoutSubscription = _stdoutSubscription;
+    final stderrSubscription = _stderrSubscription;
+    _session = null;
     _stdoutSubscription = null;
     _stderrSubscription = null;
-    final session = _session;
-    _session = null;
-    if (session != null) {
-      await session.close();
-    }
     if (mounted && _state != _ClientState.disconnected) {
       setState(() => _state = _ClientState.disconnected);
     }
+    await Future.wait<void>([
+      if (stdoutSubscription != null) stdoutSubscription.cancel(),
+      if (stderrSubscription != null) stderrSubscription.cancel(),
+      if (session != null) session.close(),
+    ]);
   }
 
   @override
