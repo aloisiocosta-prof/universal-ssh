@@ -91,7 +91,7 @@ final class SshConnectionService implements SshConnectable {
                 height: 24,
               ),
             )
-          : await client.shell();
+          : await client.shell(pty: null);
       return _SshTerminalSession(client, shell);
     } catch (_) {
       client.close();
