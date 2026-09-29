@@ -29,6 +29,7 @@ jobs:
           channel: stable
           cache: true
       - name: Validate tag against pubspec version
+        id: validate-version
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           EVENT_NAME: ${{ github.event_name }}
@@ -39,7 +40,7 @@ jobs:
           from pathlib import Path
 
           source = Path("pubspec.yaml").read_text(encoding="utf-8")
-          match = re.search(r"(?m)^version:\\s*([0-9]+\\.[0-9]+\\.[0-9]+)(?:\\+[0-9]+)?\\s*$", source)
+          match = re.search(r"(?m)^version:\s*([0-9]+\.[0-9]+\.[0-9]+)(?:\+[0-9]+)?\s*$", source)
           if not match:
               raise SystemExit("pubspec.yaml must define a SemVer version with optional build number")
           expected = f"v{match.group(1)}"
@@ -50,6 +51,8 @@ jobs:
               print(f"Validated release tag {tag}")
           else:
               print(f"PR release preview will target {expected}")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"release_tag={expected}\\n")
           PY
       - name: Generate Flutter web scaffold
         run: flutter create --platforms=web --project-name universal_ssh .
@@ -58,7 +61,7 @@ jobs:
         run: flutter build web --release --base-href /universal-ssh/ --output build/web-release
       - name: Package release asset and checksum
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ steps.validate-version.outputs.release_tag }}
         run: |
           set -euo pipefail
           mkdir -p dist
