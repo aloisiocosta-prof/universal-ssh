@@ -8,6 +8,8 @@
 
 A aplicação negocia SSH real com `dartssh2`, pede confirmação explícita da impressão digital do host, solicita a senha somente depois da confirmação e abre um shell remoto. Android conecta por TCP nativo. Web/PWA e UWP/WebView precisam do gateway WSS, pois o browser não abre sockets TCP brutos.
 
+O shell padrão solicita PTY para preservar o comportamento de terminal interativo. Nesse modo, a saída é apresentada como fluxo do terminal e `stderr` não deve ser tratado como um canal separado. Para consumidores que precisam distinguir `stdout` e `stderr` (por exemplo, execução de comandos e testes de integração), use `SshConnectionRequest(allocatePty: false)`. O modo sem PTY não oferece semântica completa de terminal, redimensionamento ou controles interativos. A sessão sem PTY é validada contra OpenSSH real; emulação VT/ANSI completa continua fora do MVP. Consulte [RFC 4254 §5.2 e §6.6](https://www.rfc-editor.org/rfc/rfc4254) e a documentação de [shell remoto do dartssh2](https://github.com/TerminalStudio/dartssh2#spawn-a-shell-on-remote-host).
+
 Para preparar o gateway com allowlist de destinos e origens, siga [docs/architecture/SSH_GATEWAY.md](docs/architecture/SSH_GATEWAY.md) e execute `dart run bin/ssh_gateway.dart`. A senha SSH não é armazenada. A impressão digital é solicitada em cada conexão até existir armazenamento seguro de hosts confiáveis.
 
 Essa entrega não equivale a validação em Xbox físico nem a publicação de uma instância de gateway. A instalação UWP/Xbox e o teste com servidor SSH autorizado continuam no protocolo de #18.
