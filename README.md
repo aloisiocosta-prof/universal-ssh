@@ -215,7 +215,7 @@ Os scaffolds oficiais de `android/` e `web/` são atualmente gerados pelo Flutte
 
 ## Limitações técnicas abertas e soluções verificáveis
 
-A arquitetura separa o app estático dos serviços que mantêm conexões SSH. O GitHub Pages entrega arquivos por HTTPS; ele não executa um processo persistente para encaminhar TCP. O navegador usa APIs web como WebSocket. A solução para Web e WebView é um gateway WSS separado; Android pode usar o transporte TCP nativo. Essa separação segue a arquitetura SSH dos RFCs 4251–4254 e o mapeamento WebSocket do RFC 7118.
+A arquitetura separa o app estático dos serviços que mantêm conexões SSH. O GitHub Pages entrega arquivos por HTTPS; ele não executa um processo persistente para encaminhar TCP. O navegador usa APIs web como WebSocket. A solução para Web e WebView é um gateway WSS separado; Android pode usar o transporte TCP nativo. Essa separação segue a arquitetura SSH dos RFCs 4251–4254 e o transporte bidirecional WebSocket do RFC 6455, normalmente protegido por TLS no esquema WSS.
 
 ```mermaid
 flowchart LR
@@ -245,7 +245,7 @@ O smoke test público verifica disponibilidade e integridade básica dos arquivo
 - GitHub Pages com Actions e URL publicada: [deploy automático](https://docs.github.com/en/get-started/start-your-journey/deploying-your-website-automatically) e [workflows customizados](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 - Flutter WebSockets: [receita oficial de WebSocket](https://docs.flutter.dev/cookbook/networking/web-sockets) e [suporte Web](https://docs.flutter.dev/platform-integration/web).
 - IETF SSH: [RFC 4251 — arquitetura](https://www.rfc-editor.org/rfc/rfc4251), [RFC 4252 — autenticação](https://www.rfc-editor.org/rfc/rfc4252) e [RFC 4254 — canais e shell](https://www.rfc-editor.org/rfc/rfc4254).
-- IETF WebSocket: [RFC 6455](https://www.rfc-editor.org/rfc/rfc6455) e [RFC 7118 — WebSocket como transporte SSH](https://www.rfc-editor.org/rfc/rfc7118).
+- IETF WebSocket: [RFC 6455 — WebSocket Protocol](https://www.rfc-editor.org/rfc/rfc6455).
 - Microsoft: [opções de desenvolvimento Xbox](https://learn.microsoft.com/en-us/windows/uwp/apps-for-xbox/development-options), [deploy UWP](https://learn.microsoft.com/en-us/windows/uwp/packaging/install-universal-windows-apps-with-the-winappdeploycmd-tool) e [empacotamento UWP/MSIX](https://learn.microsoft.com/en-us/windows/msix/package/packaging-uwp-apps).
 - GitHub Actions: [uso seguro de Actions](https://docs.github.com/en/actions/reference/security/secure-use) e [permissões de workflow](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions).
 
