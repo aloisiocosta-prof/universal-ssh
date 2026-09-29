@@ -39,11 +39,6 @@ jobs:
         run: flutter pub get
       - name: Formatting gate
         run: dart format --output=none --set-exit-if-changed lib test
-      - name: Temporary formatter diff
-        if: always()
-        run: |
-          dart format lib test
-          git diff -- test/widget_test.dart
       - name: Static analysis
         run: flutter analyze --fatal-infos --fatal-warnings
       - name: Unit and widget tests with coverage
