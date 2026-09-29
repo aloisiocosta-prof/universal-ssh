@@ -6,6 +6,8 @@
 
 ## Objetivo
 
+O primeiro objetivo é validar um MVP funcional de cliente SSH e reunir evidências para decidir depois o modelo de negócio e o plano de negócio. O escopo e os critérios estão em [docs/product/MVP.md](docs/product/MVP.md) e na [issue #10](https://github.com/aloisiocosta-prof/universal-ssh/issues/10).
+
 O projeto busca oferecer uma experiência de terminal remoto consistente em dispositivos com capacidades muito diferentes, desde navegadores e celulares Android até PCs Windows e o Xbox One original.
 
 O Xbox One é tratado como plataforma restritiva de referência. Em vez de espalhar verificações específicas de sistema operacional pelo aplicativo, recursos como rede, armazenamento seguro, teclado, gamepad, clipboard e arquivos são abstraídos por capabilities e adapters de plataforma.
