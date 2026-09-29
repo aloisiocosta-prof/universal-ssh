@@ -12,6 +12,7 @@ on:
       - "pubspec.lock"
       - ".github/workflows/build.yml"
       - ".github/workflows/quality.yml"
+      - "docs/architecture/**"
   pull_request:
     branches: [main]
     paths:
@@ -24,6 +25,7 @@ on:
       - "pubspec.lock"
       - ".github/workflows/build.yml"
       - ".github/workflows/quality.yml"
+      - "docs/architecture/**"
   workflow_dispatch:
 permissions:
   contents: read
@@ -60,6 +62,45 @@ jobs:
             ci:
               - '.github/workflows/build.yml'
               - '.github/workflows/quality.yml'
+              - 'docs/architecture/**'
+
+  architecture-diagrams:
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Mermaid architecture diagrams
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/mermaid
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          out = Path('/tmp/mermaid')
+          count = 0
+          for doc in Path('docs/architecture').glob('*.md'):
+              text = doc.read_text(encoding='utf-8')
+              for block in re.findall(r'```mermaid\n(.*?)```', text, re.S):
+                  count += 1
+                  (out / f'{count:02d}.mmd').write_text(block, encoding='utf-8')
+          if count != 18:
+              raise SystemExit(f'Expected 18 Mermaid architecture diagrams, found {count}')
+          print(f'Validated catalog size: {count} diagrams')
+          PY
+          mkdir -p /tmp/mermaid-rendered
+          cat > /tmp/puppeteer.json <<'JSON'
+          {"args":["--no-sandbox","--disable-setuid-sandbox"]}
+          JSON
+          for diagram in /tmp/mermaid/*.mmd; do
+            name="$(basename "$diagram" .mmd)"
+            echo "Rendering $name"
+            npm exec --yes --package=@mermaid-js/mermaid-cli -- mmdc -p /tmp/puppeteer.json -i "$diagram" -o "/tmp/mermaid-rendered/$name.svg"
+          done
 
   quality-gate:
     needs: changes

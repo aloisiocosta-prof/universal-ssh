@@ -23,7 +23,7 @@ public sealed class BridgeSocketLifecycle
     {
         lock (_gate)
         {
-            if (_state == State.Connecting)
+            if (_state is State.Connecting or State.Connected)
             {
                 _state = State.Disconnected;
             }
