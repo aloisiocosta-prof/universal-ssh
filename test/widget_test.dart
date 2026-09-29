@@ -9,8 +9,7 @@ Future<void> tapVisible(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  testWidgets('validates endpoint data before continuing',
-      (tester) async {
+  testWidgets('validates endpoint data before continuing', (tester) async {
     await tester.pumpWidget(const UniversalSshApp());
 
     final connect = tester.widget<FilledButton>(
@@ -18,18 +17,23 @@ void main() {
     );
     expect(connect.onPressed, isNull);
 
-    await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
+    await tester.enterText(
+        find.byKey(const Key('host-field')), 'server.example');
     await tester.enterText(find.byKey(const Key('user-field')), 'demo');
     await tester.pump();
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('connect-button'))).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('connect-button')))
+          .onPressed,
       isNotNull,
     );
 
     await tester.enterText(find.byKey(const Key('port-field')), '65536');
     await tester.pump();
     expect(
-      tester.widget<FilledButton>(find.byKey(const Key('connect-button'))).onPressed,
+      tester
+          .widget<FilledButton>(find.byKey(const Key('connect-button')))
+          .onPressed,
       isNull,
     );
   });
@@ -38,7 +42,8 @@ void main() {
       (tester) async {
     await tester.pumpWidget(const UniversalSshApp());
 
-    await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
+    await tester.enterText(
+        find.byKey(const Key('host-field')), 'server.example');
     await tester.enterText(find.byKey(const Key('port-field')), '22');
     await tester.enterText(find.byKey(const Key('user-field')), 'demo');
     await tapVisible(tester, find.byKey(const Key('connect-button')));
@@ -48,7 +53,8 @@ void main() {
 
     await tapVisible(tester, find.byKey(const Key('trust-host-key')));
     expect(find.text('Autenticação'), findsOneWidget);
-    expect(find.textContaining('não digite senha nem chave privada'), findsOneWidget);
+    expect(find.textContaining('não digite senha nem chave privada'),
+        findsOneWidget);
 
     await tapVisible(tester, find.byKey(const Key('simulate-auth')));
     expect(find.text('Terminal'), findsOneWidget);
@@ -66,7 +72,8 @@ void main() {
   testWidgets('rejected host key returns to endpoint form', (tester) async {
     await tester.pumpWidget(const UniversalSshApp());
 
-    await tester.enterText(find.byKey(const Key('host-field')), 'server.example');
+    await tester.enterText(
+        find.byKey(const Key('host-field')), 'server.example');
     await tester.enterText(find.byKey(const Key('user-field')), 'demo');
     await tapVisible(tester, find.byKey(const Key('connect-button')));
 
