@@ -5,6 +5,7 @@ on:
     paths:
       - "lib/**"
       - "test/**"
+      - "scripts/**"
       - "web/**"
       - "android/**"
       - "uwp/**"
@@ -20,6 +21,7 @@ on:
     paths:
       - "lib/**"
       - "test/**"
+      - "scripts/**"
       - "web/**"
       - "android/**"
       - "uwp/**"
@@ -55,6 +57,7 @@ jobs:
             shared:
               - 'lib/**'
               - 'test/**'
+              - 'scripts/**'
               - 'pubspec.yaml'
               - 'pubspec.lock'
             web:
@@ -164,17 +167,8 @@ jobs:
       # Repository Pages sites are hosted below /<repository>/, unlike a custom domain.
       - name: Build GitHub Pages variant
         run: flutter build web --release --base-href /universal-ssh/ --output build/web-pages
-      - name: Verify GitHub Pages base path
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          index = Path("build/web-pages/index.html").read_text(encoding="utf-8")
-          expected = '<base href="/universal-ssh/">'
-          if expected not in index:
-              raise SystemExit(f"Expected {expected!r} in Pages index.html")
-          print("GitHub Pages base path is correct.")
-          PY
+      - name: Verify GitHub Pages base path and Flutter bootstrap
+        run: python3 scripts/release_contract.py --pages-html build/web-pages/index.html --base-path /universal-ssh/
       - uses: actions/upload-artifact@v4
         with: {name: flutter-web-pages, path: build/web-pages/, if-no-files-found: error}
       - name: Upload Pages build artifact
@@ -223,17 +217,7 @@ jobs:
             echo "GitHub Pages did not serve index.html and flutter_bootstrap.js before timeout."
             exit 1
           fi
-          python3 - "$RUNNER_TEMP/pages-index.html" <<'PY'
-          import sys
-          from pathlib import Path
-
-          html = Path(sys.argv[1]).read_text(encoding="utf-8")
-          required = ('<base href="/universal-ssh/">', 'flutter_bootstrap.js')
-          missing = [item for item in required if item not in html]
-          if missing:
-              raise SystemExit(f"Published Pages HTML is missing expected entries: {missing}")
-          print("Published Pages HTML and Flutter bootstrap are reachable with the expected base path.")
-          PY
+          python3 scripts/release_contract.py --pages-html "$RUNNER_TEMP/pages-index.html" --base-path /universal-ssh/
 
   build-android:
     needs: [changes, quality-gate]
