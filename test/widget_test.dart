@@ -28,7 +28,8 @@ void main() {
     await _fillConnectionForm(tester);
 
     await tester.tap(find.byKey(const Key('connect-button')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Confirme a chave do servidor'), findsOneWidget);
     expect(connector.passwordRequests, 0);
 
@@ -39,7 +40,8 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('password-field')), 'secret');
     await tester.tap(find.byKey(const Key('submit-password')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(connector.password, 'secret');
     expect(find.text('Conectado'), findsOneWidget);
@@ -63,7 +65,8 @@ void main() {
     expect(connector.session.written, 'whoami\r'.codeUnits);
 
     await tester.tap(find.byKey(const Key('disconnect-button')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(connector.session.closed, isTrue);
     expect(find.text('Desconectado'), findsOneWidget);
   });
@@ -75,7 +78,8 @@ void main() {
     await _fillConnectionForm(tester);
 
     await tester.tap(find.byKey(const Key('connect-button')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.byKey(const Key('reject-host-key')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
