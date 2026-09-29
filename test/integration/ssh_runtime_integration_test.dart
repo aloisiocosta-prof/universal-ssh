@@ -41,6 +41,7 @@ void main() {
 
           expect(hostKeyVerified, isTrue);
           expect(passwordRequested, isTrue);
+          expect(request.allocatePty, isTrue);
           final output = StringBuffer();
           final markerReceived = Completer<void>();
           final subscription = session.stdout.listen((bytes) {
@@ -68,7 +69,12 @@ void main() {
         'keeps stderr separate and completes when the remote shell exits',
         () async {
           final session = await service.connect(
-            request: request,
+            request: SshConnectionRequest(
+              host: request.host,
+              port: request.port,
+              username: request.username,
+              allocatePty: false,
+            ),
             onVerifyHostKey: (_) async => true,
             requestPassword: () async => password,
           );
