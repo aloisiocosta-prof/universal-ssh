@@ -134,8 +134,7 @@ class _HomePageState extends State<HomePage> {
   Future<bool> _confirmHostKey(SshHostIdentity identity) async {
     if (!mounted) return false;
     setState(() {
-      _hostIdentityMessage =
-          '${identity.algorithm}\n${identity.fingerprint}';
+      _hostIdentityMessage = '${identity.algorithm}\n${identity.fingerprint}';
     });
     final accepted = await showDialog<bool>(
       context: context,

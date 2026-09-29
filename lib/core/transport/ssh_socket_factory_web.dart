@@ -15,8 +15,8 @@ Future<SSHSocket> createPlatformSshSocket({
   final url = gatewayUrl?.trim() ?? '';
   final token = gatewayToken ?? '';
   final uri = Uri.tryParse(url);
-  final localDevelopment = uri != null &&
-      (uri.host == 'localhost' || uri.host == '127.0.0.1');
+  final localDevelopment =
+      uri != null && (uri.host == 'localhost' || uri.host == '127.0.0.1');
   if (uri == null ||
       !(uri.scheme == 'wss' || (uri.scheme == 'ws' && localDevelopment)) ||
       token.length < 32) {

@@ -35,9 +35,8 @@ final class SshGatewayPolicy {
     required Iterable<String> targets,
     required Iterable<String> origins,
   })  : _token = token,
-        _targets = targets
-            .map((value) => SshGatewayTarget.parse(value).key)
-            .toSet(),
+        _targets =
+            targets.map((value) => SshGatewayTarget.parse(value).key).toSet(),
         _origins = origins
             .map((value) => value.trim())
             .where((value) => value.isNotEmpty)
