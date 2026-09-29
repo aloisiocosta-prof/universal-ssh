@@ -2,18 +2,18 @@
 
 This inventory complements the semantic C4/UML architecture. It is intentionally physical: every tracked file under `lib/`, `test/`, and `uwp/` must appear exactly once in this document. The Architecture Gate derives the expected inventory from Git and rejects drift.
 
-**Tracked files: 51** — lib: 14, test: 12, uwp: 25.
+**Tracked files: 60** — lib: 20, test: 15, uwp: 25.
 
 ## Repository structure
 
 ```mermaid
 flowchart TB
   R[universal-ssh]
-  R --> L[lib — 14 files]
-  R --> T[test — 12 files]
+  R --> L[lib — 20 files]
+  R --> T[test — 15 files]
   R --> U[uwp — 25 files]
-  L --> LC[core/ssh + core/transport + main]
-  T --> TC[core tests + performance + widget]
+  L --> LC[core/ssh + core/transport + gateway + main]
+  T --> TC[core tests + gateway + integration + performance + widget]
   U --> UH[UniversalSshUwp host]
   U --> UT[UniversalSshUwp.ProtocolTests]
   U --> US[UniversalSshUwp.sln]
@@ -21,26 +21,33 @@ flowchart TB
 
 ## File inventory
 
-### lib/ (14)
+### lib/ (20)
 
 - `lib/core/ssh/ssh_contracts.dart`
+- `lib/core/ssh/ssh_runtime.dart`
 - `lib/core/transport/bridge_ssh_transport.dart`
 - `lib/core/transport/dart_io_ssh_transport.dart`
 - `lib/core/transport/platform_transport.dart`
 - `lib/core/transport/platform_transport_factory.dart`
 - `lib/core/transport/platform_transport_factory_io.dart`
 - `lib/core/transport/platform_transport_factory_stub.dart`
+- `lib/core/transport/ssh_socket_factory.dart`
+- `lib/core/transport/ssh_socket_factory_io.dart`
+- `lib/core/transport/ssh_socket_factory_stub.dart`
+- `lib/core/transport/ssh_socket_factory_web.dart`
 - `lib/core/transport/ssh_transport.dart`
 - `lib/core/transport/uwp_bridge_protocol.dart`
 - `lib/core/transport/webview_bridge_adapter.dart`
 - `lib/core/transport/webview_host_notifier.dart`
 - `lib/core/transport/webview_host_notifier_stub.dart`
 - `lib/core/transport/webview_host_notifier_web.dart`
+- `lib/gateway/ssh_gateway_policy.dart`
 - `lib/main.dart`
 
-### test/ (12)
+### test/ (14)
 
 - `test/core/ssh/ssh_contracts_test.dart`
+- `test/core/ssh/ssh_runtime_test.dart`
 - `test/core/transport/bridge_ssh_transport_test.dart`
 - `test/core/transport/dart_io_ssh_transport_test.dart`
 - `test/core/transport/platform_transport_factory_test.dart`
@@ -50,6 +57,8 @@ flowchart TB
 - `test/core/transport/uwp_bridge_protocol_test.dart`
 - `test/core/transport/webview_bridge_adapter_test.dart`
 - `test/core/transport/webview_host_notifier_web_test.dart`
+- `test/gateway/ssh_gateway_policy_test.dart`
+- `test/integration/ssh_runtime_integration_test.dart`
 - `test/performance/core_performance_test.dart`
 - `test/widget_test.dart`
 

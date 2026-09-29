@@ -66,12 +66,13 @@ void main() {
 
   group('FR-004 authentication', () {
     test('models authentication input without storing a plaintext secret', () {
-      final request = SshAuthenticationRequest.publicKey(
+      final request = SshAuthenticationRequest.password(
         username: 'researcher',
       );
 
       expect(request.username, 'researcher');
-      expect(request.method, SshAuthenticationMethod.publicKey);
+      expect(request.method, SshAuthenticationMethod.password);
+      expect(request.toString(), isNot(contains('secret')));
     });
   });
 

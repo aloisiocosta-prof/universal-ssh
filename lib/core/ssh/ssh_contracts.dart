@@ -1,6 +1,7 @@
 enum SshSessionState {
   disconnected,
   connecting,
+  error,
   verifyingHost,
   authenticating,
   openingSession,
@@ -12,7 +13,7 @@ enum SshHostVerificationDecision { trust, reject }
 
 enum SshFailureCode { hostKeyMismatch }
 
-enum SshAuthenticationMethod { publicKey }
+enum SshAuthenticationMethod { password, publicKey }
 
 enum SshOutputChannel { stdout, stderr }
 
@@ -21,11 +22,17 @@ final class SshConnectionRequest {
     required this.host,
     required this.port,
     required this.username,
+    this.allocatePty = true,
   });
 
   final String host;
   final int port;
   final String username;
+
+  /// Allocate a pseudo-terminal for interactive terminal sessions.
+  ///
+  /// When false, SSH keeps stdout and stderr on separate channels.
+  final bool allocatePty;
 }
 
 final class SshHostIdentity {
@@ -64,6 +71,12 @@ final class SshAuthenticationRequest {
     required this.username,
     required this.method,
   });
+
+  const SshAuthenticationRequest.password({required String username})
+      : this._(
+          username: username,
+          method: SshAuthenticationMethod.password,
+        );
 
   const SshAuthenticationRequest.publicKey({required String username})
       : this._(

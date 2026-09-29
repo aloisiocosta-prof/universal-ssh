@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  dartssh2: ^4.1.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

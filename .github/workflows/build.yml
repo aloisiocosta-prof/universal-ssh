@@ -154,14 +154,31 @@ jobs:
       - name: Generate official Flutter platform scaffolds
         run: flutter create --platforms=android,web --project-name universal_ssh .
       - run: flutter pub get
+      # Keep a root-relative build for the UWP WebView package.
       - run: flutter build web --release
       - uses: actions/upload-artifact@v4
         with: {name: flutter-web, path: build/web/, if-no-files-found: error}
-      - name: Upload build/web for GitHub Pages
+      # Repository Pages sites are hosted below /<repository>/, unlike a custom domain.
+      - name: Build GitHub Pages variant
+        run: flutter build web --release --base-href /universal-ssh/ --output build/web-pages
+      - name: Verify GitHub Pages base path
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          index = Path("build/web-pages/index.html").read_text(encoding="utf-8")
+          expected = '<base href="/universal-ssh/">'
+          if expected not in index:
+              raise SystemExit(f"Expected {expected!r} in Pages index.html")
+          print("GitHub Pages base path is correct.")
+          PY
+      - uses: actions/upload-artifact@v4
+        with: {name: flutter-web-pages, path: build/web-pages/, if-no-files-found: error}
+      - name: Upload Pages build artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v4
         with:
-          path: build/web/
+          path: build/web-pages/
 
   deploy-pages:
     name: Deploy build/web to GitHub Pages

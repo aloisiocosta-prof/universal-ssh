@@ -65,3 +65,60 @@ jobs:
           ! grep -RInE --exclude-dir=.git --exclude='*.lock' '(BEGIN (RSA|OPENSSH|EC) PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9_]{20,})' .
       - name: Performance smoke test
         run: flutter test test/performance --reporter expanded
+
+  ssh-integration:
+    name: Real SSH server integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install and configure an isolated OpenSSH endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+          sudo useradd --create-home --shell /bin/bash ssh-e2e
+          password="$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')"
+          echo "::add-mask::$password"
+          printf 'ssh-e2e:%s\n' "$password" | sudo chpasswd
+          port="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+          echo "SSH_TEST_HOST=127.0.0.1" >> "$GITHUB_ENV"
+          echo "SSH_TEST_PORT=$port" >> "$GITHUB_ENV"
+          echo "SSH_TEST_USERNAME=ssh-e2e" >> "$GITHUB_ENV"
+          echo "SSH_TEST_PASSWORD=$password" >> "$GITHUB_ENV"
+          sudo ssh-keygen -A
+          sudo mkdir -p /run/sshd
+          cat > "$RUNNER_TEMP/sshd_config" <<EOF
+          Port $port
+          ListenAddress 127.0.0.1
+          HostKey /etc/ssh/ssh_host_ed25519_key
+          PidFile $RUNNER_TEMP/sshd.pid
+          PermitRootLogin no
+          PasswordAuthentication yes
+          KbdInteractiveAuthentication no
+          PubkeyAuthentication no
+          UsePAM no
+          AllowUsers ssh-e2e
+          EOF
+          sudo /usr/sbin/sshd -t -f "$RUNNER_TEMP/sshd_config"
+          sudo /usr/sbin/sshd -D -e -f "$RUNNER_TEMP/sshd_config" > "$RUNNER_TEMP/sshd.log" 2>&1 &
+          for attempt in $(seq 1 30); do
+            if bash -c ">/dev/tcp/127.0.0.1/$port" 2>/dev/null; then
+              echo "Disposable OpenSSH endpoint is ready."
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/sshd.log"
+          echo "OpenSSH endpoint did not start." >&2
+          exit 1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Flutter scaffolds
+        run: flutter create --platforms=android,web --project-name universal_ssh .
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Exercise the real SSH session
+        run: flutter test test/integration/ssh_runtime_integration_test.dart --reporter expanded
