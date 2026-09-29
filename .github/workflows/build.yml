@@ -91,9 +91,9 @@ jobs:
               for block in re.findall(r'```mermaid\n(.*?)```', text, re.S):
                   count += 1
                   (out / f'{count:02d}.mmd').write_text(block, encoding='utf-8')
-          if count != 18:
-              raise SystemExit(f'Expected 18 Mermaid architecture diagrams, found {count}')
-          print(f'Validated catalog size: {count} diagrams')
+          if count != 19:
+              raise SystemExit(f'Expected 19 Mermaid diagrams (18 semantic + 1 physical), found {count}')
+          print(f'Validated catalog size: {count} diagrams (18 semantic + 1 physical)')
 
           readme = Path('README.md').read_text(encoding='utf-8')
           canonical = Path('docs/architecture/c4.md').read_text(encoding='utf-8')
