@@ -91,9 +91,9 @@ jobs:
               for block in re.findall(r'```mermaid\n(.*?)```', text, re.S):
                   count += 1
                   (out / f'{count:02d}.mmd').write_text(block, encoding='utf-8')
-          if count != 18:
-              raise SystemExit(f'Expected 18 Mermaid architecture diagrams, found {count}')
-          print(f'Validated catalog size: {count} diagrams')
+          if count != 19:
+              raise SystemExit(f'Expected 19 Mermaid diagrams (18 semantic + 1 physical), found {count}')
+          print(f'Validated catalog size: {count} diagrams (18 semantic + 1 physical)')
 
           readme = Path('README.md').read_text(encoding='utf-8')
           canonical = Path('docs/architecture/c4.md').read_text(encoding='utf-8')
@@ -104,6 +104,29 @@ jobs:
           if readme_blocks != canonical_blocks:
               raise SystemExit('README C4 diagrams differ from docs/architecture/c4.md')
           print('README C4 diagrams match canonical architecture')
+
+          inventory = Path('docs/architecture/files.md').read_text(encoding='utf-8')
+          tracked = sorted(
+              path.as_posix()
+              for root in ('lib', 'test', 'uwp')
+              for path in Path(root).rglob('*')
+              if path.is_file()
+          )
+          documented = sorted(
+              value
+              for line in inventory.splitlines()
+              if line.startswith('- ')
+              for value in (line[2:].strip().strip(chr(96)),)
+              if value.startswith(('lib/', 'test/', 'uwp/'))
+          )
+          if documented != tracked:
+              missing = sorted(set(tracked) - set(documented))
+              stale = sorted(set(documented) - set(tracked))
+              raise SystemExit(
+                  'Repository file inventory drift. '
+                  f'Missing: {missing or "none"}; stale: {stale or "none"}'
+              )
+          print(f'Repository file inventory matches {len(tracked)} tracked files')
           PY
           mkdir -p /tmp/mermaid-rendered
           cat > /tmp/puppeteer.json <<'JSON'
