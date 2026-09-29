@@ -105,11 +105,13 @@ jobs:
           canonical = Path('docs/architecture/c4.md').read_text(encoding='utf-8')
           readme_blocks = re.findall(r'```mermaid\n(.*?)```', readme, re.S)
           canonical_blocks = re.findall(r'```mermaid\n(.*?)```', canonical, re.S)
-          if len(readme_blocks) != 4:
-              raise SystemExit(f'Expected 4 Mermaid C4 diagrams in README.md, found {len(readme_blocks)}')
-          if readme_blocks != canonical_blocks:
+          if len(readme_blocks) != 5:
+              raise SystemExit(f'Expected 4 Mermaid C4 diagrams and 1 deployment topology in README.md, found {len(readme_blocks)}')
+          if readme_blocks[:4] != canonical_blocks:
               raise SystemExit('README C4 diagrams differ from docs/architecture/c4.md')
-          print('README C4 diagrams match canonical architecture')
+          if 'GitHub Pages' not in readme_blocks[4] or 'Gateway' not in readme_blocks[4]:
+              raise SystemExit('README deployment topology must show Pages and the separate gateway')
+          print('README C4 diagrams match canonical architecture; deployment topology is present')
 
           inventory = Path('docs/architecture/files.md').read_text(encoding='utf-8')
           tracked = sorted(
