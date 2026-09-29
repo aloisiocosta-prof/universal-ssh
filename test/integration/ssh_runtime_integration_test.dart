@@ -11,7 +11,6 @@ void main() {
 
   group(
     'real OpenSSH MVP integration',
-    skip: port == null ? 'SSH_TEST_PORT is not configured.' : null,
     () {
       const service = SshConnectionService();
       final request = SshConnectionRequest(
@@ -93,5 +92,6 @@ void main() {
         );
       });
     },
+    skip: port == null ? 'SSH_TEST_PORT is not configured.' : null,
   );
 }
