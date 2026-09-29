@@ -84,7 +84,8 @@ void main() {
 }
 
 Future<void> _fillConnectionForm(WidgetTester tester) async {
-  await tester.enterText(find.byKey(const Key('host-field')), 'ssh.example.test');
+  await tester.enterText(
+      find.byKey(const Key('host-field')), 'ssh.example.test');
   await tester.enterText(find.byKey(const Key('username-field')), 'alice');
   await tester.pump();
   final connect = tester.widget<FilledButton>(
