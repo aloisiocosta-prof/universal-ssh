@@ -179,8 +179,7 @@ class _HomePageState extends State<HomePage> {
             obscureText: true,
             autofocus: true,
             decoration: const InputDecoration(labelText: 'Senha do servidor'),
-            onSubmitted: (_) =>
-                Navigator.pop(context, controller.text),
+            onSubmitted: (_) => Navigator.pop(context, controller.text),
           ),
           actions: [
             TextButton(
@@ -321,8 +320,10 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Conectar a um servidor SSH',
-                    style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  'Conectar a um servidor SSH',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'A chave do servidor será exibida antes da senha. '
@@ -393,7 +394,12 @@ class _HomePageState extends State<HomePage> {
                 ],
                 if (_error != null) ...[
                   const SizedBox(height: 16),
-                  Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  Text(
+                    _error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                 ],
                 if (_hostIdentityMessage != null) ...[
                   const SizedBox(height: 12),
@@ -443,7 +449,10 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           if (_error != null)
-            Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           Expanded(
             child: Container(
               key: const Key('terminal-output'),

@@ -68,7 +68,9 @@ final class _WebSocketSshSocket implements SSHSocket {
         _opened.completeError(StateError('The SSH gateway closed early.'));
       }
       if (!_connected.isCompleted) {
-        _connected.completeError(StateError('The SSH gateway rejected the target.'));
+        _connected.completeError(
+          StateError('The SSH gateway rejected the target.'),
+        );
       }
       if (!_done.isCompleted) _done.complete();
     }).toJS;
@@ -94,7 +96,9 @@ final class _WebSocketSshSocket implements SSHSocket {
 
   Future<void> get connected => _connected.future.timeout(
         const Duration(seconds: 15),
-        onTimeout: () => throw TimeoutException('SSH gateway connection timed out.'),
+        onTimeout: () => throw TimeoutException(
+          'SSH gateway connection timed out.',
+        ),
       );
 
   void _handleControl(String value) {
@@ -104,7 +108,9 @@ final class _WebSocketSshSocket implements SSHSocket {
         if (!_connected.isCompleted) _connected.complete();
       } else {
         final code = message['code'] as String? ?? 'connection_failed';
-        final error = StateError('SSH gateway rejected the connection ($code).');
+        final error = StateError(
+          'SSH gateway rejected the connection ($code).',
+        );
         if (!_connected.isCompleted) _connected.completeError(error);
       }
     } on FormatException {

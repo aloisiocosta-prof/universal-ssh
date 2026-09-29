@@ -20,11 +20,9 @@ final class SshTerminalSession {
   Stream<Uint8List> get stderr => _session.stderr;
   Future<void> get done => _session.done;
 
-  void write(List<int> bytes) =>
-      _session.write(Uint8List.fromList(bytes));
+  void write(List<int> bytes) => _session.write(Uint8List.fromList(bytes));
 
-  void resize(int columns, int rows) =>
-      _session.resizeTerminal(columns, rows);
+  void resize(int columns, int rows) => _session.resizeTerminal(columns, rows);
 
   Future<void> close() async {
     _session.close();

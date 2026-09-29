@@ -54,7 +54,10 @@ void main() {
         SshGatewayTarget.parse('[2001:db8::1]:2222').key,
         '2001:db8::1:2222',
       );
-      expect(() => SshGatewayTarget.parse('2001:db8::1:22'), throwsFormatException);
+      expect(
+        () => SshGatewayTarget.parse('2001:db8::1:22'),
+        throwsFormatException,
+      );
     });
   });
 }
