@@ -50,6 +50,8 @@ void main() {
                 !markerReceived.isCompleted) {
               markerReceived.complete();
             }
+          }, onDone: () {
+            if (!stderrEof.isCompleted) stderrEof.complete();
           });
 
           try {
@@ -82,12 +84,16 @@ void main() {
           final stderr = StringBuffer();
           final stdoutReceived = Completer<void>();
           final stderrReceived = Completer<void>();
+          final stdoutEof = Completer<void>();
+          final stderrEof = Completer<void>();
           final stdoutSubscription = session.stdout.listen((bytes) {
             stdout.write(utf8.decode(bytes, allowMalformed: true));
             if (stdout.toString().contains('MVP_STDOUT_OK') &&
                 !stdoutReceived.isCompleted) {
               stdoutReceived.complete();
             }
+          }, onDone: () {
+            if (!stdoutEof.isCompleted) stdoutEof.complete();
           });
           final stderrSubscription = session.stderr.listen((bytes) {
             stderr.write(utf8.decode(bytes, allowMalformed: true));
@@ -124,10 +130,53 @@ void main() {
             );
             expect(stdout.toString(), contains('MVP_STDOUT_OK'));
             expect(stderr.toString(), contains('MVP_STDERR_OK'));
+            await stdoutEof.future.timeout(const Duration(seconds: 5));
+            await stderrEof.future.timeout(const Duration(seconds: 5));
           } finally {
             await stdoutSubscription.cancel();
             await stderrSubscription.cancel();
             await session.close().timeout(const Duration(seconds: 5));
+          }
+        },
+      );
+
+      test(
+        'observes EOF on both channels when the client closes the session',
+        () async {
+          final session = await service.connect(
+            request: SshConnectionRequest(
+              host: request.host,
+              port: request.port,
+              username: request.username,
+              allocatePty: false,
+            ),
+            onVerifyHostKey: (_) async => true,
+            requestPassword: () async => password,
+          );
+          final stdoutEof = Completer<void>();
+          final stderrEof = Completer<void>();
+          final stdoutSubscription = session.stdout.listen(
+            (_) {},
+            onDone: () {
+              if (!stdoutEof.isCompleted) stdoutEof.complete();
+            },
+          );
+          final stderrSubscription = session.stderr.listen(
+            (_) {},
+            onDone: () {
+              if (!stderrEof.isCompleted) stderrEof.complete();
+            },
+          );
+
+          try {
+            await session.close().timeout(const Duration(seconds: 5));
+            await Future.wait([stdoutEof.future, stderrEof.future]).timeout(
+              const Duration(seconds: 5),
+            );
+            await session.done.timeout(const Duration(seconds: 5));
+          } finally {
+            await stdoutSubscription.cancel();
+            await stderrSubscription.cancel();
           }
         },
       );
