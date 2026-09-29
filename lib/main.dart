@@ -310,7 +310,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 20),
           FilledButton.icon(
             key: const Key('connect-button'),
-            onPressed: _startDemo,
+            onPressed: _endpointIsValid ? _startDemo : null,
             icon: const Icon(Icons.arrow_forward_rounded),
             label: const Text('Continuar demonstração'),
           ),
@@ -438,6 +438,7 @@ class _HomePageState extends State<HomePage> {
         key: key,
         controller: controller,
         keyboardType: keyboardType,
+        onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
