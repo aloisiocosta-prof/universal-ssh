@@ -171,38 +171,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<String?> _requestPassword() async {
     if (!mounted) return null;
-    final controller = TextEditingController();
-    try {
-      return await showDialog<String>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('Autenticação SSH'),
-          content: TextField(
-            key: const Key('password-field'),
-            controller: controller,
-            obscureText: true,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Senha do servidor'),
-            onSubmitted: (_) => Navigator.pop(context, controller.text),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              key: const Key('submit-password'),
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Autenticar'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      controller.clear();
-      controller.dispose();
-    }
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const _PasswordDialog(),
+    );
   }
 
   void _watch(Stream<List<int>> stream) {
@@ -497,6 +470,50 @@ class _HomePageState extends State<HomePage> {
               ),
               border: const OutlineInputBorder(),
             ),
+          ),
+        ],
+      );
+}
+
+
+class _PasswordDialog extends StatefulWidget {
+  const _PasswordDialog();
+
+  @override
+  State<_PasswordDialog> createState() => _PasswordDialogState();
+}
+
+class _PasswordDialogState extends State<_PasswordDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller
+      ..clear()
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: const Text('Autenticação SSH'),
+        content: TextField(
+          key: const Key('password-field'),
+          controller: _controller,
+          obscureText: true,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Senha do servidor'),
+          onSubmitted: (_) => Navigator.pop(context, _controller.text),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            key: const Key('submit-password'),
+            onPressed: () => Navigator.pop(context, _controller.text),
+            child: const Text('Autenticar'),
           ),
         ],
       );
