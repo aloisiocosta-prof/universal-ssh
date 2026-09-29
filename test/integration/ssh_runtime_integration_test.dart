@@ -46,7 +46,7 @@ void main() {
           final subscription = session.stdout.listen((bytes) {
             output.write(utf8.decode(bytes, allowMalformed: true));
             if (RegExp(r'[\r\n]MVP_SSH_REAL_SESSION_OK[\r\n]')
-              .hasMatch(output.toString()) &&
+                    .hasMatch(output.toString()) &&
                 !markerReceived.isCompleted) {
               markerReceived.complete();
             }
@@ -92,8 +92,7 @@ void main() {
               request: request,
               onVerifyHostKey: (_) async => true,
               requestPassword: () async =>
-                  'invalid-' +
-                  DateTime.now().microsecondsSinceEpoch.toString(),
+                  'invalid-' + DateTime.now().microsecondsSinceEpoch.toString(),
             ),
             throwsA(anything),
           );
