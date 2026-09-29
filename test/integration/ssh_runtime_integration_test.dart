@@ -45,7 +45,7 @@ void main() {
           final markerReceived = Completer<void>();
           final subscription = session.stdout.listen((bytes) {
             output.write(utf8.decode(bytes, allowMalformed: true));
-            if (RegExp(r'[\r\n]MVP_SSH_REAL_SESSION_OK[\r\n]')
+            if (RegExp(r'[\\r\\n]MVP_SSH_REAL_SESSION_OK[\\r\\n]')
                     .hasMatch(output.toString()) &&
                 !markerReceived.isCompleted) {
               markerReceived.complete();
@@ -54,12 +54,61 @@ void main() {
 
           try {
             session.write(
-              utf8.encode("printf '\\nMVP_SSH_REAL_SESSION_OK\\n'\n"),
+              utf8.encode("printf '\\\\nMVP_SSH_REAL_SESSION_OK\\\\n'\\n"),
             );
             await markerReceived.future.timeout(const Duration(seconds: 10));
             expect(output.toString(), contains('MVP_SSH_REAL_SESSION_OK'));
           } finally {
             await subscription.cancel();
+            await session.close().timeout(const Duration(seconds: 5));
+          }
+        },
+      );
+
+      test(
+        'keeps stderr separate and completes when the remote shell exits',
+        () async {
+          final session = await service.connect(
+            request: request,
+            onVerifyHostKey: (_) async => true,
+            requestPassword: () async => password,
+          );
+          final stdout = StringBuffer();
+          final stderr = StringBuffer();
+          final stdoutReceived = Completer<void>();
+          final stderrReceived = Completer<void>();
+          final stdoutSubscription = session.stdout.listen((bytes) {
+            stdout.write(utf8.decode(bytes, allowMalformed: true));
+            if (stdout.toString().contains('MVP_STDOUT_OK') &&
+                !stdoutReceived.isCompleted) {
+              stdoutReceived.complete();
+            }
+          });
+          final stderrSubscription = session.stderr.listen((bytes) {
+            stderr.write(utf8.decode(bytes, allowMalformed: true));
+            if (stderr.toString().contains('MVP_STDERR_OK') &&
+                !stderrReceived.isCompleted) {
+              stderrReceived.complete();
+            }
+          });
+
+          try {
+            session.write(
+              utf8.encode(
+                "printf 'MVP_STDOUT_OK\\n'; "
+                "printf 'MVP_STDERR_OK\\n' >&2; exit\\n",
+              ),
+            );
+            await Future.wait<void>([
+              stdoutReceived.future.timeout(const Duration(seconds: 10)),
+              stderrReceived.future.timeout(const Duration(seconds: 10)),
+              session.done.timeout(const Duration(seconds: 10)),
+            ]);
+            expect(stdout.toString(), contains('MVP_STDOUT_OK'));
+            expect(stderr.toString(), contains('MVP_STDERR_OK'));
+          } finally {
+            await stdoutSubscription.cancel();
+            await stderrSubscription.cancel();
             await session.close().timeout(const Duration(seconds: 5));
           }
         },
