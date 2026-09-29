@@ -72,10 +72,18 @@ jobs:
           cache: true
       - run: flutter create --platforms=android,web --project-name universal_ssh .
       - run: flutter pub get
-      - run: flutter build web --release --base-href ./
+      - name: Build Web artifact for GitHub Pages
+        run: flutter build web --release --base-href /universal-ssh/
       - uses: actions/upload-artifact@v4
         with:
           name: universal-ssh-web
+          path: build/web/
+          if-no-files-found: error
+      - name: Build Web artifact for the UWP WebView package
+        run: flutter build web --release --base-href /Web/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: universal-ssh-uwp-web
           path: build/web/
           if-no-files-found: error
 
@@ -113,7 +121,7 @@ jobs:
           ref: ${{ needs.verify.outputs.tag }}
       - uses: actions/download-artifact@v5
         with:
-          name: universal-ssh-web
+          name: universal-ssh-uwp-web
           path: uwp/UniversalSshUwp/Web
       - name: Generate placeholder UWP visual assets
         shell: pwsh
