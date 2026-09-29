@@ -78,7 +78,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
-    unawaited(_disconnect());
+    unawaited(_disconnect(updateUi: false));
     _host.dispose();
     _port.dispose();
     _username.dispose();
@@ -224,14 +224,14 @@ class _HomePageState extends State<HomePage> {
     _command.clear();
   }
 
-  Future<void> _disconnect() async {
+  Future<void> _disconnect({bool updateUi = true}) async {
     final session = _session;
     final stdoutSubscription = _stdoutSubscription;
     final stderrSubscription = _stderrSubscription;
     _session = null;
     _stdoutSubscription = null;
     _stderrSubscription = null;
-    if (mounted && _state != _ClientState.disconnected) {
+    if (updateUi && mounted && _state != _ClientState.disconnected) {
       setState(() => _state = _ClientState.disconnected);
     }
     await Future.wait<void>([
