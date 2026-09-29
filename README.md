@@ -2,7 +2,15 @@
 
 **Universal SSH** é um projeto open source de cliente SSH multiplataforma construído com **Flutter e Dart**, projetado para compartilhar o máximo possível de código entre **Web/PWA, Android, Windows x64 e Xbox One**.
 
-> **Estado atual:** núcleo de transporte SSH e bridge UWP em desenvolvimento incremental, com TDD, CI/CD multiplataforma e documentação arquitetural executável.
+> **Estado:** o MVP agora inclui uma primeira sessão SSH real em Android e Web/PWA via gateway WebSocket auto-hospedado. UWP/WebView também pode usar o gateway WSS; a bridge nativa UWP e a compatibilidade Xbox ainda dependem de validação específica.
+
+## Executar uma sessão SSH real
+
+A aplicação negocia SSH real com `dartssh2`, pede confirmação explícita da impressão digital do host, solicita a senha somente depois da confirmação e abre um shell remoto. Android conecta por TCP nativo. Web/PWA e UWP/WebView precisam do gateway WSS, pois o browser não abre sockets TCP brutos.
+
+Para preparar o gateway com allowlist de destinos e origens, siga [docs/architecture/SSH_GATEWAY.md](docs/architecture/SSH_GATEWAY.md) e execute `dart run bin/ssh_gateway.dart`. A senha SSH não é armazenada. A impressão digital é solicitada em cada conexão até existir armazenamento seguro de hosts confiáveis.
+
+Essa entrega não equivale a validação em Xbox físico nem a publicação de uma instância de gateway. A instalação UWP/Xbox e o teste com servidor SSH autorizado continuam no protocolo de #18.
 
 ## Objetivo
 

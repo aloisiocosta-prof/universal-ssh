@@ -1,6 +1,7 @@
 enum SshSessionState {
   disconnected,
   connecting,
+  error,
   verifyingHost,
   authenticating,
   openingSession,
@@ -12,7 +13,7 @@ enum SshHostVerificationDecision { trust, reject }
 
 enum SshFailureCode { hostKeyMismatch }
 
-enum SshAuthenticationMethod { publicKey }
+enum SshAuthenticationMethod { password, publicKey }
 
 enum SshOutputChannel { stdout, stderr }
 
@@ -64,6 +65,12 @@ final class SshAuthenticationRequest {
     required this.username,
     required this.method,
   });
+
+  const SshAuthenticationRequest.password({required String username})
+      : this._(
+          username: username,
+          method: SshAuthenticationMethod.password,
+        );
 
   const SshAuthenticationRequest.publicKey({required String username})
       : this._(
