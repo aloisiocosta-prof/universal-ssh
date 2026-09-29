@@ -2,7 +2,7 @@
 
 This inventory complements the semantic C4/UML architecture. It is intentionally physical: every tracked file under `lib/`, `test/`, and `uwp/` must appear exactly once in this document. The Architecture Gate derives the expected inventory from Git and rejects drift.
 
-**Tracked files: 59** — lib: 20, test: 14, uwp: 25.
+**Tracked files: 60** — lib: 20, test: 15, uwp: 25.
 
 ## Repository structure
 
@@ -10,10 +10,10 @@ This inventory complements the semantic C4/UML architecture. It is intentionally
 flowchart TB
   R[universal-ssh]
   R --> L[lib — 20 files]
-  R --> T[test — 14 files]
+  R --> T[test — 15 files]
   R --> U[uwp — 25 files]
   L --> LC[core/ssh + core/transport + gateway + main]
-  T --> TC[core tests + gateway + performance + widget]
+  T --> TC[core tests + gateway + performance + release + widget]
   U --> UH[UniversalSshUwp host]
   U --> UT[UniversalSshUwp.ProtocolTests]
   U --> US[UniversalSshUwp.sln]
@@ -44,7 +44,7 @@ flowchart TB
 - `lib/gateway/ssh_gateway_policy.dart`
 - `lib/main.dart`
 
-### test/ (14)
+### test/ (15)
 
 - `test/core/ssh/ssh_contracts_test.dart`
 - `test/core/ssh/ssh_runtime_test.dart`
@@ -59,6 +59,7 @@ flowchart TB
 - `test/core/transport/webview_host_notifier_web_test.dart`
 - `test/gateway/ssh_gateway_policy_test.dart`
 - `test/performance/core_performance_test.dart`
+- `test/release_contract_test.py`
 - `test/widget_test.dart`
 
 ### uwp/ (25)
