@@ -215,6 +215,42 @@ universal-ssh/
 
 Os scaffolds oficiais de `android/` e `web/` são atualmente gerados pelo Flutter durante o CI. Isso mantém esses targets alinhados ao template da versão Flutter utilizada pelo pipeline enquanto a arquitetura inicial é estabilizada.
 
+## Limitações técnicas abertas e soluções verificáveis
+
+A arquitetura separa o app estático dos serviços que mantêm conexões SSH. O GitHub Pages entrega arquivos por HTTPS; ele não executa um processo persistente para encaminhar TCP. O navegador usa APIs web como WebSocket. A solução para Web e WebView é um gateway WSS separado; Android pode usar o transporte TCP nativo. Essa separação segue a arquitetura SSH dos RFCs 4251–4254 e o transporte bidirecional WebSocket do RFC 6455, normalmente protegido por TLS no esquema WSS.
+
+```mermaid
+flowchart LR
+  Browser["Flutter Web / PWA"] -->|"HTTPS: arquivos estáticos"| Pages["GitHub Pages"]
+  Browser -->|"WSS + TLS"| Gateway["Gateway SSH auto-hospedado"]
+  Android["Flutter Android"] -->|"TCP"| SSH["Servidor SSH autorizado"]
+  UWP["Host UWP / WebView"] -->|"WSS + TLS"| Gateway
+  Gateway -->|"TCP"| SSH
+  Actions["GitHub Actions"] -->|"build, teste, deploy e smoke test"| Pages
+  Actions -->|"tag validada, ZIP e SHA-256"| Release["GitHub Release"]
+```
+
+| Limitação ainda aberta | Solução técnica | Como validar | Situação |
+| --- | --- | --- | --- |
+| Pages é hospedagem estática e não pode ser o proxy TCP do SSH. | Manter o gateway WSS como serviço separado; restringir origens e destinos por allowlist, exigir TLS e nunca gravar senha/conteúdo do terminal nos logs. | Testes de integração do gateway com servidor SSH de laboratório; confirmar wss://, allowlist, autenticação e desconexão. | Gateway documentado; operação pública/gerenciada ainda não implantada. |
+| O browser não oferece socket TCP bruto ao app Flutter Web. | Android usa TCP nativo; Web/PWA e WebView falam WSS com o gateway, que encaminha o protocolo SSH por TCP. | Validar handshake, bytes bidirecionais, timeout, cancelamento e fechamento em navegador real. | Implementação inicial existe; teste de ponta a ponta depende de gateway/servidor. |
+| Confiança da chave do host e credenciais. | Seguir SSH transport/auth (RFC 4251/4252): apresentar fingerprint antes da senha; não persistir senha; implementar armazenamento de host confiável somente via armazenamento seguro por plataforma. | Testes com host key alterada/desconhecida, autenticação inválida e reconexão; comprovar que nenhuma senha aparece em logs. | Confirmação explícita na sessão atual; armazenamento persistente seguro ainda pendente. |
+| Build UWP não comprova funcionamento em Windows nem Xbox. | Empacotar o Web build em host UWP; instalar/testar no Windows e Xbox em Developer Mode, coletando versão do sistema, arquitetura, logs e resultado da interação. | Instalação real via Device Portal/WinAppDeployCmd; smoke test de rede, teclado/gamepad, suspensão e retomada. | Evidência física pendente; CI não deve marcar essa compatibilidade como concluída. |
+| Artefatos Android/UWP de CI não são instaladores oficiais assinados. | Configurar assinatura em job de release protegido, usando secrets/environment e permissões mínimas; verificar instalação e identidade do pacote. | Assinatura verificável, hash no Release e instalação limpa em dispositivos-alvo. | Não publicar APK/MSIX como release de usuário até configurar chaves/certificados e testar. |
+| Deploy Pages pode passar no build e falhar após publicação/caminho incorreto. | Após deploy, testar a URL fornecida pelo ambiente Pages, status HTTP, flutter_bootstrap.js e base href /universal-ssh/; manter aprovação de deploy restrita à branch padrão. | Job deploy-pages do GitHub Actions consulta a URL publicada e falha se os recursos ou base path estiverem incorretos. | Smoke test automatizado no workflow; primeiro deploy integrado ainda precisa ocorrer em main. |
+| Um tag pode produzir Release sem os gates do projeto se o pipeline validar somente o pacote. | Validar vMAJOR.MINOR.PATCH contra pubspec.yaml e bloquear build/publicação até passar Quality, testes de contrato e Security. | Testar tag igual e divergente; inspecionar ZIP, SHA256SUMS.txt e BUILD-INFO.txt no artefato do run. | Gating e contrato implementados neste PR; primeiro Release real depende de merge aprovado em main. |
+
+O smoke test público verifica disponibilidade e integridade básica dos arquivos servidos; não simula login SSH nem prova compatibilidade de hardware. O primeiro deploy/Release é uma validação de produção e deve ocorrer somente a partir de um commit revisado em main. A issue [#18](https://github.com/aloisiocosta-prof/universal-ssh/issues/18) permanece aberta até registrar as evidências funcionais e de plataforma.
+
+### Fontes técnicas primárias
+
+- GitHub Pages com Actions e URL publicada: [deploy automático](https://docs.github.com/en/get-started/start-your-journey/deploying-your-website-automatically) e [workflows customizados](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+- Flutter WebSockets: [receita oficial de WebSocket](https://docs.flutter.dev/cookbook/networking/web-sockets) e [suporte Web](https://docs.flutter.dev/platform-integration/web).
+- IETF SSH: [RFC 4251 — arquitetura](https://www.rfc-editor.org/rfc/rfc4251), [RFC 4252 — autenticação](https://www.rfc-editor.org/rfc/rfc4252) e [RFC 4254 — canais e shell](https://www.rfc-editor.org/rfc/rfc4254).
+- IETF WebSocket: [RFC 6455 — WebSocket Protocol](https://www.rfc-editor.org/rfc/rfc6455).
+- Microsoft: [opções de desenvolvimento Xbox](https://learn.microsoft.com/en-us/windows/uwp/apps-for-xbox/development-options), [deploy UWP](https://learn.microsoft.com/en-us/windows/uwp/packaging/install-universal-windows-apps-with-the-winappdeploycmd-tool) e [empacotamento UWP/MSIX](https://learn.microsoft.com/en-us/windows/msix/package/packaging-uwp-apps).
+- GitHub Actions: [uso seguro de Actions](https://docs.github.com/en/actions/reference/security/secure-use) e [permissões de workflow](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#permissions).
+
 ## CI/CD
 
 O workflow principal está em `.github/workflows/build.yml`.

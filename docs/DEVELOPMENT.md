@@ -24,6 +24,18 @@ This project follows Semantic Versioning 2.0.0.
 - Git release tags use `vMAJOR.MINOR.PATCH`.
 - `pubspec.yaml` is the source of truth for the application version.
 
+## GitHub Pages deployment verification
+
+A successful build is not a successful deployment. On every push to `main`, the Build workflow deploys the Pages artifact and then probes the URL returned by the GitHub Pages environment. The probe retries for propagation, requires HTTP success for the page and Flutter bootstrap, and checks the repository base path.
+
+This smoke test proves that the generated static app is reachable at the expected path. It does not prove browser interaction, WSS gateway availability, SSH connectivity, or Windows/Xbox compatibility; those require their own integration and platform evidence. Pull requests build and validate the Pages variant, but do not deploy to the public site.
+
+## Versioned releases and artifacts
+
+The release tag must match the SemVer portion of `pubspec.yaml`: for example, `0.1.0+1` maps to tag `v0.1.0`. The Release workflow rejects a mismatched tag, builds the Pages-compatible Web/PWA bundle from that tagged commit, and publishes a GitHub Release with the versioned ZIP, `SHA256SUMS.txt`, and commit/version metadata. The release build itself runs on the tag; create tags only from a reviewed commit on `main` after required checks pass.
+
+Android and UWP packages remain CI artifacts for testing until release signing is configured. The current Android output is not signed with a project release key, and the UWP package is unsigned; publishing either as a supported installable release would mislead users. Add protected signing keys/certificates as GitHub Actions environment secrets and verify an install on target hardware before promoting those packages to Releases.
+
 ## Test-driven development
 
 Production behavior is developed using **Red -> Green -> Refactor**:

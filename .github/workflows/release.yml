@@ -1,0 +1,93 @@
+name: Versioned Release
+
+on:
+  pull_request:
+    branches: [main, codex/real-ssh-mvp]
+    paths:
+      - "lib/**"
+      - "web/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - "README.md"
+      - "test/**"
+      - "scripts/**"
+      - ".github/workflows/**"
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  quality-gate:
+    name: Quality and TDD gate
+    uses: ./.github/workflows/quality.yml
+
+  security-gate:
+    name: Dependency and secret gate
+    uses: ./.github/workflows/security.yml
+
+  build-web-release:
+    name: Build versioned Web/PWA release
+    needs: [quality-gate, security-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test release and Pages contracts
+        run: python3 -m unittest discover -s test -p 'release_contract_test.py' -v
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Validate tag against pubspec version
+        id: validate-version
+        env:
+          RELEASE_TAG: \${{ github.ref_name }}
+          EVENT_NAME: \${{ github.event_name }}
+        run: |
+          python3 scripts/release_contract.py \
+            --pubspec pubspec.yaml \
+            --tag "$RELEASE_TAG" \
+            --event-name "$EVENT_NAME" \
+            --output "$GITHUB_OUTPUT"
+      - name: Generate Flutter web scaffold
+        run: flutter create --platforms=web --project-name universal_ssh .
+      - run: flutter pub get
+      - name: Build Pages-compatible Web/PWA
+        run: flutter build web --release --base-href /universal-ssh/ --output build/web-release
+      - name: Package release asset and checksum
+        env:
+          RELEASE_TAG: \${{ steps.validate-version.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          (cd build/web-release && zip -qr "$GITHUB_WORKSPACE/dist/universal-ssh-web-$RELEASE_TAG.zip" .)
+          (cd dist && sha256sum "universal-ssh-web-$RELEASE_TAG.zip" > SHA256SUMS.txt)
+          printf 'version=%s\ncommit=%s\n' "$RELEASE_TAG" "$GITHUB_SHA" > dist/BUILD-INFO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: versioned-web-release
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish GitHub Release
+    if: github.event_name == 'push'
+    needs: build-web-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: versioned-web-release
+          path: dist
+      - name: Publish versioned artifacts
+        env:
+          GH_TOKEN: \${{ github.token }}
+          RELEASE_TAG: \${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "$RELEASE_TAG" --generate-notes
